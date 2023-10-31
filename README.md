@@ -7,3 +7,4 @@ Group member names and ccids (3-4 members)
   durairaj, Aakash Durairaj
 
 # Names of anyone you have collaborated with (as much as it is allowed within the course policy) or a line saying that you did not collaborate with anyone else.  
+We did not collaborate with anyone else.
