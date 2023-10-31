@@ -26,63 +26,63 @@ class Setup:
 
         defineQuery = """
         CREATE TABLE users (
-            usr         TEXT,
+            usr         INT,
             pwd         TEXT,
             name        TEXT,
             email       TEXT,
             city        TEXT,
-            timezone    REAL,
+            timezone    FLOAT,
             PRIMARY KEY (usr)
         );
         CREATE TABLE follows (
-            flwer       INTEGER,
-            flwee       INTEGER,
+            flwer       INT,
+            flwee       INT,
             start_date  DATE,
             PRIMARY KEY (flwer, flwee),
-            FOREIGN KEY (flwer) REFERENCES users(usr),
-            FOREIGN KEY (flwee) REFERENCES users(usr)
+            FOREIGN KEY (flwer) REFERENCES users,
+            FOREIGN KEY (flwee) REFERENCES users
         );
         CREATE TABLE tweets (
-            tid         INTEGER,
-            writer      INTEGER,
+            tid         INT,
+            writer      INT,
             tdate       DATE,
             text        TEXT,
-            replyto     INTEGER,
+            replyto     INT,
             PRIMARY KEY (tid),
-            FOREIGN KEY (writer) REFERENCES users(usr),
-            FOREIGN KEY (replyto) REFERENCES tweets(tid)
+            FOREIGN KEY (writer) REFERENCES users,
+            FOREIGN KEY (replyto) REFERENCES tweets
         );
         CREATE TABLE hashtags (
             term        TEXT,
             PRIMARY KEY (term)
         );
         CREATE TABLE mentions (
-            tid         INTEGER,
+            tid         INT,
             term        TEXT,
             PRIMARY KEY (tid, term),
-            FOREIGN KEY (tid) REFERENCES tweets(tid),
-            FOREIGN KEY (term) REFERENCES hashtags(term)
+            FOREIGN KEY (tid) REFERENCES tweets,
+            FOREIGN KEY (term) REFERENCES hashtags
         );
         CREATE TABLE retweets (
-            usr         INTEGER,
-            tid         INTEGER,
+            usr         INT,
+            tid         INT,
             rdate       DATE,
             PRIMARY KEY (usr, tid),
-            FOREIGN KEY (usr) REFERENCES users(usr),
-            FOREIGN KEY (tid) REFERENCES tweets(tid)
+            FOREIGN KEY (usr) REFERENCES users,
+            FOREIGN KEY (tid) REFERENCES tweets
         );
         CREATE TABLE lists (
             lname       TEXT,
-            owner       INTEGER,
+            owner       INT,
             PRIMARY KEY (lname),
-            FOREIGN KEY (owner) REFERENCES users(usr)
+            FOREIGN KEY (owner) REFERENCES users
         );
         CREATE TABLE includes (
             lname       TEXT,
-            member      INTEGER,
+            member      INT,
             PRIMARY KEY (lname, member),
-            FOREIGN KEY (lname) REFERENCES lists(lname),
-            FOREIGN KEY (member) REFERENCES users(usr)
+            FOREIGN KEY (lname) REFERENCES lists,
+            FOREIGN KEY (member) REFERENCES users
         );
         """
         Connection.cursor.executescript(defineQuery)
