@@ -1,8 +1,10 @@
 import sqlite3
-import getpass
+import os
+from Login import Login
 
 connection = None
 cursor = None
+
 
 def connect(path):
     global connection, cursor
@@ -12,6 +14,7 @@ def connect(path):
     cursor.execute(' PRAGMA foreign_keys=ON; ')
     connection.commit()
     return
+
 
 def drop_tables():
     global connection, cursor
@@ -33,6 +36,7 @@ def drop_tables():
     cursor.execute(drop_tweets)
     cursor.execute(drop_follows)
     cursor.execute(drop_users)
+
 
 def define_tables():
     global connection, cursor
@@ -130,69 +134,21 @@ def define_tables():
     cursor.execute(includes_table)
     connection.commit()
 
-    return    
+    return
 
-def enter_user():
-    global connection, cursor
-    insert_user = '''
-    INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
-                            ('parshva', 'shah', 'Parshva Shah', 'p@gmailcom', 'Edmonton', 'MST');
-    '''
-    cursor.execute(insert_user)
-    connection.commit()
 
-def login():
-    while (True):
-        user = input("Enter your username (press 1 to create account): ")
-        if user == "exit":
-            exit()
-        if user.isdigit():
-            if int(user) == 1:
-                user = register()
-                if user != None:
-                    return user
-        pswd = getpass.getpass('Enter your password:')
-        if userAuthentication(user, pswd):
-            return user
-
-def register():
-    pass
-
-def userAuthentication(username, password):
-    global connection, cursor
-    data = (username, password)
-    cursor.execute("SELECT pwd, name FROM users WHERE usr = ?", (username,))
-    
-    # Fetch the result
-    result = cursor.fetchone()
-    
-    if result is not None: # The query returned a result
-
-        passwordSelected = result[0]  # Assuming the password is in the first column (index 0)
-        
-        if passwordSelected == password:
-            print(result[1] + ", you have successfully logged in.")
-            # Passwords match, authentication successful
-            return username
-        else:
-            # Passwords don't match
-            print("Incorrect password.")
-            return None
-    else:
-        # No matching user found in the database
-        print(username + " does not exist.")
-        return None
-    
-    
 def main():
     global connection, cursor
 
-    path = "./data.db"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
     connect(path)
     drop_tables()
     define_tables()
-    enter_user()
-    user = login()
+
+    Login.set_connection(connection, cursor)
+    Login.enter_user()
+    user = Login.login()
+
 
 if __name__ == "__main__":
     main()
