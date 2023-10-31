@@ -1,23 +1,16 @@
 from getpass import getpass
+from Connection import Connection
 
 
 class Login:
-    connection = None
-    cursor = None
-
-    @staticmethod
-    def set_connection(connection, cursor):
-        Login.connection = connection
-        Login.cursor = cursor
-
     @staticmethod
     def enter_user():
         insert_user = '''
         INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
                                 ('parshva', 'shah', 'Parshva Shah', 'p@gmailcom', 'Edmonton', 'MST');
         '''
-        Login.cursor.execute(insert_user)
-        Login.connection.commit()
+        Connection.cursor.executescript(insert_user)
+        Connection.connection.commit()
 
     @staticmethod
     def login():
@@ -41,11 +34,11 @@ class Login:
     @staticmethod
     def userAuthentication(username, password):
         data = (username, password)
-        Login.cursor.execute(
-            "SELECT pwd, name FROM users WHERE usr = ?", (username,))
+        Connection.cursor.execute(
+            f"SELECT pwd, name FROM users WHERE usr = '{username}';")
 
         # Fetch the result
-        result = Login.cursor.fetchone()
+        result = Connection.cursor.fetchone()
 
         if result is not None:  # The query returned a result
 

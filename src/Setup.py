@@ -1,23 +1,7 @@
-import sqlite3
+from Connection import Connection
 
 
 class Setup:
-    connection = None
-    cursor = None
-
-    @staticmethod
-    def is_connected():
-        return Setup.connection is not None and Setup.cursor is not None
-
-
-    @staticmethod
-    def connect(path):
-        Setup.connection = sqlite3.connect(path)
-        Setup.cursor = Setup.connection.cursor()
-        Setup.cursor.execute(' PRAGMA foreign_keys=ON; ')
-        Setup.connection.commit()
-
-
     @staticmethod
     def drop_tables():
         drop_includes = "DROP TABLE IF EXISTS includes; "
@@ -29,14 +13,14 @@ class Setup:
         drop_follows = "DROP TABLE IF EXISTS follows; "
         drop_users = "DROP TABLE IF EXISTS users; "
 
-        Setup.cursor.execute(drop_includes)
-        Setup.cursor.execute(drop_lists)
-        Setup.cursor.execute(drop_retweets)
-        Setup.cursor.execute(drop_mentions)
-        Setup.cursor.execute(drop_hashtags)
-        Setup.cursor.execute(drop_tweets)
-        Setup.cursor.execute(drop_follows)
-        Setup.cursor.execute(drop_users)
+        Connection.cursor.executescript(drop_includes)
+        Connection.cursor.executescript(drop_lists)
+        Connection.cursor.executescript(drop_retweets)
+        Connection.cursor.executescript(drop_mentions)
+        Connection.cursor.executescript(drop_hashtags)
+        Connection.cursor.executescript(drop_tweets)
+        Connection.cursor.executescript(drop_follows)
+        Connection.cursor.executescript(drop_users)
 
 
     def define_tables():
@@ -123,12 +107,12 @@ class Setup:
         );
         """
 
-        Setup.cursor.execute(users_table)
-        Setup.cursor.execute(follows_table)
-        Setup.cursor.execute(tweets_table)
-        Setup.cursor.execute(hashtags_table)
-        Setup.cursor.execute(mentions_table)
-        Setup.cursor.execute(retweets_table)
-        Setup.cursor.execute(lists_table)
-        Setup.cursor.execute(includes_table)
-        Setup.connection.commit()
+        Connection.cursor.executescript(users_table)
+        Connection.cursor.executescript(follows_table)
+        Connection.cursor.executescript(tweets_table)
+        Connection.cursor.executescript(hashtags_table)
+        Connection.cursor.executescript(mentions_table)
+        Connection.cursor.executescript(retweets_table)
+        Connection.cursor.executescript(lists_table)
+        Connection.cursor.executescript(includes_table)
+        Connection.connection.commit()
