@@ -1,5 +1,6 @@
 import sqlite3
 import getpass
+import os
 
 connection = None
 cursor = None
@@ -187,7 +188,7 @@ def userAuthentication(username, password):
 def main():
     global connection, cursor
 
-    path = "./data.db"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
     connect(path)
     drop_tables()
     define_tables()
