@@ -45,6 +45,7 @@ class Login:
         Returns:
             int: highest user id in the db
         """
+        assert Connection.is_connected()
         Connection.cursor.execute("SELECT MAX(usr) FROM users;")
         result = Connection.cursor.fetchone()
         if result is None:
@@ -60,7 +61,7 @@ class Login:
             str: on successful authentication, the user's id. otherwise 'exit'
         """
         while (True):
-            user = input("Enter your user id (alternatively, 'register' or 'exit'): ")
+            user = input("Enter your user id (alternatively, 'register' or 'exit'): ").strip()
             if user.lower() == "exit":
                 return "exit"
 
@@ -83,34 +84,39 @@ class Login:
 
     @staticmethod
     def register() -> str:
+        """Prompts user for information, then creates a new user in the db
+
+        Returns:
+            str: user id of the newly created user, or None on cancellation
+        """
         assert Connection.is_connected()
 
-        print("Creating new account.")
+        print("\nCreating new account.")
         print("You will be asked for a name, email, city, timezone, and password, " +
-              "after which you can confirm your registration.")
+              "after which you can confirm your registration.\n")
         while (True):
-            name = input("Display Name: ")
-            email = input("Email Address: ")
-            city = input("City: ")
-            timezone = input("Timezone (eg. -5): ")
+            name = input("Display Name: ").strip()
+            email = input("Email Address: ").strip()
+            city = input("City: ").strip()
+            timezone = input("Timezone (eg. -5): ").strip()
             password = getpass("Password: ")
             cPassword = getpass("Confirm Password: ")
 
             # pre-creation basic validation
-            if '@' not in email or '.' not in email:  # very basic check
+            if '@' not in email or '.' not in email:  # very basic email validation
                 print("\nEmail was an invalid format. Please try again.")
                 continue
             try:
                 timezone = float(timezone)
             except ValueError:
-                print("\nTimezone must be a floating-point number. Please try again.")
+                print("\nTimezone must be a number. Please try again.")
                 continue
             if password != cPassword:
                 print("\nPasswords entered do not match. Please try again.")
                 continue
 
             # confirm creation before committing
-            confirmReg = input(f"\nCreate new account for {name}? (Y/n) ")
+            confirmReg = input(f"\nCreate new account for {name}? (Y/n) ").strip()
             if not confirmReg.lower().startswith('y'):
                 print("\nNew user registration cancelled. Returning to login prompt.")
                 return None
@@ -130,8 +136,8 @@ class Login:
                 "timezone": timezone
             })
             Connection.connection.commit()
-            print(f"Welcome, {name}.")
-            print(f"Your new user id is {uid}. You will need this id to log in.\n")
+            print(f"\nWelcome, {name}.")
+            print(f"Your new user id is {uid}. You will need this id later to log in.\n")
             return str(uid)
 
 
@@ -151,7 +157,8 @@ class Login:
         # check if the user exists
         Connection.cursor.execute(
             "SELECT pwd, name FROM users WHERE usr = :userid;",
-            {"userid": userid})
+            {"userid": userid}
+        )
         result = Connection.cursor.fetchone()
         if result is None:
             print("No user with that id exists!")
