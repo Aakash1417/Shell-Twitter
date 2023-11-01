@@ -9,10 +9,12 @@ class Login:
         """Adds some mock users to the db for testing purposes"""
         assert Connection.is_connected()
 
-        insertQuery = """
+        # hardcoded users. it's ok to use string formatting here, since no user input
+        hashes = [Login.hashPswd("shah", "1"), Login.hashPswd("bruh", "2")]
+        insertQuery = f"""
         INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
-                                ('1', 'shah', 'Parshva Shah', 'p@gmailcom', 'Edmonton', '-7'),
-                                ('2', 'bruh', 'Tawfeeq Mannan', 'tawfeeq@gmail.com', 'Edmonton', '-7');
+                ('1', '{hashes[0]}', 'Parshva Shah', 'p@gmailcom', 'Edmonton', '-7'),
+                ('2', '{hashes[1]}', 'Tawfeeq Mannan', 'tawfeeq@gmail.com', 'Edmonton', '-7');
         """
         Connection.cursor.executescript(insertQuery)
         Connection.connection.commit()
@@ -34,6 +36,20 @@ class Login:
             pswd += salt
         alg.update(pswd.encode("utf-8"))
         return alg.hexdigest()
+
+
+    @staticmethod
+    def get_highest_uid() -> int:
+        """Finds the id of the user with the highest id
+
+        Returns:
+            int: highest user id in the db
+        """
+        Connection.cursor.execute("SELECT MAX(usr) FROM users;")
+        result = Connection.cursor.fetchone()
+        if result is None:
+            return 0
+        return int(result[0])
 
 
     @staticmethod
@@ -66,8 +82,57 @@ class Login:
 
 
     @staticmethod
-    def register():
-        pass
+    def register() -> str:
+        assert Connection.is_connected()
+
+        print("Creating new account.")
+        print("You will be asked for a name, email, city, timezone, and password, " +
+              "after which you can confirm your registration.")
+        while (True):
+            name = input("Display Name: ")
+            email = input("Email Address: ")
+            city = input("City: ")
+            timezone = input("Timezone (eg. -5): ")
+            password = getpass("Password: ")
+            cPassword = getpass("Confirm Password: ")
+
+            # pre-creation basic validation
+            if '@' not in email or '.' not in email:  # very basic check
+                print("\nEmail was an invalid format. Please try again.")
+                continue
+            try:
+                timezone = float(timezone)
+            except ValueError:
+                print("\nTimezone must be a floating-point number. Please try again.")
+                continue
+            if password != cPassword:
+                print("\nPasswords entered do not match. Please try again.")
+                continue
+
+            # confirm creation before committing
+            confirmReg = input(f"\nCreate new account for {name}? (Y/n) ")
+            if not confirmReg.lower().startswith('y'):
+                print("\nNew user registration cancelled. Returning to login prompt.")
+                return None
+
+            # create a new user with a unique uid
+            uid = Login.get_highest_uid() + 1
+            pwd = Login.hashPswd(password, str(uid))
+            Connection.cursor.execute("""
+            INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
+                    (:usr, :pwd, :name, :email, :city, :timezone);
+            """, {
+                "usr": uid,
+                "pwd": pwd,
+                "name": name,
+                "email": email,
+                "city": city,
+                "timezone": timezone
+            })
+            Connection.connection.commit()
+            print(f"Welcome, {name}.")
+            print(f"Your new user id is {uid}. You will need this id to log in.\n")
+            return str(uid)
 
 
     @staticmethod
@@ -95,9 +160,9 @@ class Login:
         # otherwise, the query returned a result and the user exists
         # the correrct password is in the first column (index 0)
         correctPswd = result[0]
-        if password == correctPswd:
+        if Login.hashPswd(password, str(userid)) == correctPswd:
             # authentication successful
-            print(f"Welcome back, {result[1]}.")
+            print(f"Welcome back, {result[1]}.\n")
             return True
         else:
             # Passwords don't match
