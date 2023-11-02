@@ -1,5 +1,4 @@
 from getpass import getpass
-from hashlib import sha256
 from Connection import Connection
 
 
@@ -9,33 +8,14 @@ class Login:
         """Adds some mock users to the db for testing purposes"""
         assert Connection.is_connected()
 
-        # hardcoded users. it's ok to use string formatting here, since no user input
-        hashes = [Login.hashPswd("shah", "1"), Login.hashPswd("bruh", "2")]
-        insertQuery = f"""
+        # hardcoded users
+        insertQuery = """
         INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
-                ('1', '{hashes[0]}', 'Parshva Shah', 'p@gmailcom', 'Edmonton', '-7'),
-                ('2', '{hashes[1]}', 'Tawfeeq Mannan', 'tawfeeq@gmail.com', 'Edmonton', '-7');
+                ('1', 'shah', 'Parshva Shah', 'p@gmailcom', 'Edmonton', '-7'),
+                ('2', 'bruh', 'Tawfeeq Mannan', 'tawfeeq@gmail.com', 'Edmonton', '-7');
         """
         Connection.cursor.executescript(insertQuery)
         Connection.connection.commit()
-
-
-    @staticmethod
-    def hashPswd(pswd: str, salt: str=None) -> str:
-        """Generates the hashed version of a password, with optional salt
-
-        Args:
-            pswd (str): password to hash
-            salt (str, optional): salt to include before hashing. Defaults to None.
-
-        Returns:
-            str: hashed version of password
-        """
-        alg = sha256()
-        if salt is not None:
-            pswd += salt
-        alg.update(pswd.encode("utf-8"))
-        return alg.hexdigest()
 
 
     @staticmethod
@@ -123,13 +103,12 @@ class Login:
 
             # create a new user with a unique uid
             uid = Login.get_highest_uid() + 1
-            pwd = Login.hashPswd(password, str(uid))
             Connection.cursor.execute("""
             INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
                     (:usr, :pwd, :name, :email, :city, :timezone);
             """, {
                 "usr": uid,
-                "pwd": pwd,
+                "pwd": password,
                 "name": name,
                 "email": email,
                 "city": city,
@@ -167,7 +146,7 @@ class Login:
         # otherwise, the query returned a result and the user exists
         # the correrct password is in the first column (index 0)
         correctPswd = result[0]
-        if Login.hashPswd(password, str(userid)) == correctPswd:
+        if password == correctPswd:
             # authentication successful
             print(f"Welcome back, {result[1]}.\n")
             return True
