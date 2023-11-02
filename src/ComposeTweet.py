@@ -9,11 +9,8 @@ from Setup import Setup
 from Connection import Connection
 
 class ComposeTweet:
-    tweetNumber = 0
-    def __init__(self) -> None:
-        self.tweetNumber = self.countTweets()
-              
     
+    @staticmethod              
     def countTweets(self):
         query = "SELECT MAX(tid) FROM tweets"
         Connection.cursor.execute(query)
@@ -23,30 +20,29 @@ class ComposeTweet:
         if entry == None: return 0
         else: return entry[0]
     
-    def createTweet(self, usr):
-        tweet = input("Tweet message: ")
-        if tweet != "":
-            tid = self.countTweets() + 1
-            self.writeTweetToDB(tid, usr, tweet)
-            self.findHashTags(tid,tweet)
-        
-    
-    def createReply(self, usr:int, replyTo:int):
-        reply = input("Reply: ")
-        if reply != "":
-            tid = self.countTweets() + 1
-            self.writeReplyToDB(tid, usr, reply, replyTo)
-            self.findHashTags(tid,reply)
+    @staticmethod
+    def createTweet(usr:int, replyTo:int = None):
+        tweet = ""
+        if replyTo == None: tweet = input("Enter tweet message: ")
+        else: tweet = input("Enter reply to tweet "+ str(replyTo) + ": ")
 
-    def processTweetFromDB(self):
+        if tweet != "":
+            tid = ComposeTweet.countTweets() + 1
+            ComposeTweet.writeTweetToDB(tid, usr, tweet, replyTo)
+            ComposeTweet.findHashTags(tid,tweet)
+        
+
+    @staticmethod
+    def processTweetFromDB():
         query = "SELECT * FROM tweets;"
         Connection.cursor.execute(query)
         all_entry = Connection.cursor.fetchall()        
         for entry in all_entry:
-            self.findHashTags(entry[0], entry[3])
+            ComposeTweet.findHashTags(entry[0], entry[3])
         
-        
-    def findHashTags(self, tid:int, text:str):
+    
+    @staticmethod    
+    def findHashTags(tid:int, text:str):
         words = text.split()
         hashtags = []
         
@@ -59,16 +55,18 @@ class ComposeTweet:
                 hashtags.append(word[1:].lower())
         if len(hashtags) > 0:
             for hashtag in hashtags:
-                self.addHashtagsToHashtagsDB(hashtag.lower())
-                self.addHashtagsToMentionsDB(tid, hashtag.lower())
+                ComposeTweet.addHashtagsToHashtagsDB(hashtag.lower())
+                ComposeTweet.addHashtagsToMentionsDB(tid, hashtag.lower())
         
     
-    def addHashtagsToMentionsDB(self, tid:int, hashtag:list):
+    @staticmethod
+    def addHashtagsToMentionsDB(tid:int, hashtag:list):
         insert_query = 'INSERT INTO mentions (tid, term) VALUES (?, ?);'
         Connection.cursor.execute(insert_query, (tid, hashtag))
 
     
-    def addHashtagsToHashtagsDB(self, hashtag:str):
+    @staticmethod
+    def addHashtagsToHashtagsDB(hashtag:str):
         # Check if the hashtag exists in DB
         query = "SELECT term FROM hashtags WHERE term = ?;"
         Connection.cursor.execute(query, (hashtag,))
@@ -80,17 +78,13 @@ class ComposeTweet:
             Connection.cursor.execute(insert_query, (hashtag,))
         
         Connection.connection.commit()
-        
-    def writeTweetToDB(self, tid, user, tweet):
-        insert_query = "INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES (?, ?, ?, ?, ?)"
-        Connection.cursor.execute(insert_query, (tid, user, datetime.date.today(), tweet, None))
-        Connection.connection.commit()
-        
     
-    def writeReplyToDB(self, tid, user, tweet, replyTo):
+    @staticmethod    
+    def writeTweetToDB(tid, user, tweet, replyTo):
         insert_query = "INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES (?, ?, ?, ?, ?)"
         Connection.cursor.execute(insert_query, (tid, user, datetime.date.today(), tweet, replyTo))
         Connection.connection.commit()
+        
 
 def SetUpTest():
     Setup.drop_tables()
@@ -108,19 +102,17 @@ def AddTestTweets():
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
     Connection.connect(path)
-    ct = ComposeTweet()
     
     SetUpTest()
     AddTestTweets()
-    ct.processTweetFromDB()  
+    ComposeTweet.processTweetFromDB()  
          
     usr = input("Username: ")
     code = input("tweet/reply?")
     
     if (code == "tweet"):
-        ct.createTweet(int(usr))
+        ComposeTweet.createTweet(int(usr))
     else:
         replyTo = input("Replying to which tweet: ")
-        ct.createReply(int(usr), int(replyTo))
-
+        ComposeTweet.createTweet(int(usr), int(replyTo))
     
