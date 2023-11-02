@@ -14,7 +14,6 @@ class Connection:
         """
         return Connection.connection is not None and Connection.cursor is not None
 
-
     @staticmethod
     def connect(path: str) -> None:
         """Initializes the db connection
@@ -26,3 +25,10 @@ class Connection:
         Connection.cursor = Connection.connection.cursor()
         Connection.cursor.executescript(' PRAGMA foreign_keys=ON; ')
         Connection.connection.commit()
+
+    @staticmethod
+    def close() -> None:
+        """
+            Closes the connection to the database
+        """
+        Connection.connection.close()
