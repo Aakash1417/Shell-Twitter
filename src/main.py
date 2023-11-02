@@ -13,7 +13,7 @@ def main():
     # Setup/dev methods
     Setup.drop_tables()
     Setup.define_tables()
-    Login.add_mock_users()
+    Setup.add_mock_users()
 
     print("Welcome to crystal methadata!")
 
