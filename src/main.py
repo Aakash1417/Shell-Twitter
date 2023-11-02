@@ -12,7 +12,8 @@ def main():
     Setup.define_tables()
     Setup.add_mock_users()
 
-    user = Login.login()
+    print(Login.register())
+    print(Login.login())
 
 
 if __name__ == "__main__":
