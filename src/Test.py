@@ -37,17 +37,17 @@ class Test:
 
         # Insert sample data into the 'hashtags' table
         hashtags_data = [
-            ('#example1',),
-            ('#example2',),
-            ('#sample',),
+            ('example1',),
+            ('example2',),
+            ('sample',),
         ]
         Connection.cursor.executemany("INSERT INTO hashtags VALUES (?)", hashtags_data)
 
         # Insert sample data into the 'mentions' table
         mentions_data = [
-            (1, '#example1'),
-            (2, '#example2'),
-            (3, '#sample'),
+            (1, 'example1'),
+            (2, 'example2'),
+            (3, 'sample'),
         ]
         Connection.cursor.executemany("INSERT INTO mentions VALUES (?,?)", mentions_data)
 
