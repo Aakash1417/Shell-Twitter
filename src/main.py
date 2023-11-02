@@ -3,6 +3,7 @@ from Connection import Connection
 from Setup import Setup
 from Login import Login
 from Shell import Shell
+from Test import Test
 
 
 def main():
@@ -13,7 +14,7 @@ def main():
     # Setup/dev methods
     Setup.drop_tables()
     Setup.define_tables()
-    Setup.add_mock_users()
+    Test.insert_test_data()
 
     print("Welcome to crystal methadata!")
 
