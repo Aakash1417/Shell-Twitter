@@ -10,8 +10,8 @@ def main():
 
     Setup.drop_tables()
     Setup.define_tables()
+    Setup.add_mock_users()
 
-    Login.add_mock_users()
     user = Login.login()
 
 
