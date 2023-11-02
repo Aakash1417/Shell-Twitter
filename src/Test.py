@@ -7,10 +7,6 @@ class Test:
     def insert_test_data() -> None:
         """Populates all the db tables with mock data"""
         assert Connection.is_connected()
-        
-        # create tables
-        Setup.drop_tables()
-        Setup.define_tables()
 
         # Insert sample data into the 'users' table
         users_data = [
@@ -81,4 +77,9 @@ class Test:
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
     Connection.connect(path)
+    
+    # create tables
+    Setup.drop_tables()
+    Setup.define_tables()
+    
     Test.insert_test_data()
