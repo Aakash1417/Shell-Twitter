@@ -87,3 +87,18 @@ class Setup:
         """
         Connection.cursor.executescript(defineQuery)
         Connection.connection.commit()
+
+
+    @staticmethod
+    def add_mock_users() -> None:
+        """Adds some mock users to the db for testing purposes"""
+        assert Connection.is_connected()
+
+        # hardcoded users
+        insertQuery = """
+        INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
+                ('1', 'shah', 'Parshva Shah', 'p@gmailcom', 'Edmonton', '-7'),
+                ('2', 'bruh', 'Tawfeeq Mannan', 'tawfeeq@gmail.com', 'Edmonton', '-7');
+        """
+        Connection.cursor.executescript(insertQuery)
+        Connection.connection.commit()

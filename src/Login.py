@@ -1,42 +1,9 @@
 from getpass import getpass
-from hashlib import sha256
 from Connection import Connection
 
 
 class Login:
-    @staticmethod
-    def add_mock_users() -> None:
-        """Adds some mock users to the db for testing purposes"""
-        assert Connection.is_connected()
-
-        # hardcoded users. it's ok to use string formatting here, since no user input
-        hashes = [Login.hashPswd("shah", "1"), Login.hashPswd("bruh", "2")]
-        insertQuery = f"""
-        INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
-                ('1', '{hashes[0]}', 'Parshva Shah', 'p@gmailcom', 'Edmonton', '-7'),
-                ('2', '{hashes[1]}', 'Tawfeeq Mannan', 'tawfeeq@gmail.com', 'Edmonton', '-7');
-        """
-        Connection.cursor.executescript(insertQuery)
-        Connection.connection.commit()
-
-
-    @staticmethod
-    def hashPswd(pswd: str, salt: str=None) -> str:
-        """Generates the hashed version of a password, with optional salt
-
-        Args:
-            pswd (str): password to hash
-            salt (str, optional): salt to include before hashing. Defaults to None.
-
-        Returns:
-            str: hashed version of password
-        """
-        alg = sha256()
-        if salt is not None:
-            pswd += salt
-        alg.update(pswd.encode("utf-8"))
-        return alg.hexdigest()
-
+    userID = None
 
     @staticmethod
     def get_highest_uid() -> int:
@@ -54,46 +21,78 @@ class Login:
 
 
     @staticmethod
-    def login() -> str:
-        """Runs the login service until a user successfully authenticates, or exits
+    def login() -> bool:
+        """Runs the login prompt until user authenticates or cancels
 
         Returns:
-            str: on successful authentication, the user's id. otherwise 'exit'
+            bool: True on successful login, False on cancel
         """
         while (True):
-            user = input("Enter your user id (alternatively, 'register' or 'exit'): ").strip()
-            if user.lower() == "exit":
-                return "exit"
-
-            if user.lower() == "register":
-                user = Login.register()
-                if user is not None:  # new user registered successfully
-                    return user
-                else:  # registration cancelled
-                    continue
+            user = input("\nUser ID (or 'cancel'): ").strip()
+            if user.lower() == "cancel":
+                print("Login cancelled.\n")
+                return False
 
             if not user.isnumeric():
-                print("User id must be numeric.")
+                print("User ID must be numeric.")
                 continue
 
             uid = int(user)
-            pswd = getpass("Enter your password: ")
+            pswd = getpass("Password: ")
             if Login.authenticate_user(uid, pswd):
-                return user
+                Login.userID = uid
+                return True
+            else:
+                print("Login credentials do not match. Please try again.")
 
 
     @staticmethod
-    def register() -> str:
+    def authenticate_user(userid: int, password: str) -> bool:
+        """Authenticates a user's login credentials
+
+        Args:
+            userid (int): id of the user attempting to login
+            password (str): attempted password (unhashed)
+
+        Returns:
+            bool: True if the user login credentials are valid
+        """
+        assert Connection.is_connected()
+
+        # check if the user exists
+        Connection.cursor.execute(
+            "SELECT pwd, name FROM users WHERE usr = :userid;",
+            {"userid": userid}
+        )
+        result = Connection.cursor.fetchone()
+        if result is None:
+            # no such user exists
+            return False
+
+        # otherwise, the query returned a result and the user exists
+        # the correct password is the first attribute (index 0)
+        correctPswd = result[0]
+        if password != correctPswd:
+            # password incorrect
+            return False
+        else:
+            # authentication successful
+            print(f"Welcome back, {result[1]}.\n")
+            return True
+
+
+    @staticmethod
+    def register() -> bool:
         """Prompts user for information, then creates a new user in the db
 
         Returns:
-            str: user id of the newly created user, or None on cancellation
+            bool: True on successful registration, False on cancel
         """
         assert Connection.is_connected()
 
         print("\nCreating new account.")
         print("You will be asked for a name, email, city, timezone, and password, " +
-              "after which you can confirm your registration.\n")
+              "after which you can confirm/cancel your registration.\n")
         while (True):
             name = input("Display Name: ").strip()
             email = input("Email Address: ").strip()
@@ -118,18 +117,17 @@ class Login:
             # confirm creation before committing
             confirmReg = input(f"\nCreate new account for {name}? (Y/n) ").strip()
             if not confirmReg.lower().startswith('y'):
-                print("\nNew user registration cancelled. Returning to login prompt.")
-                return None
+                print("\nNew user registration cancelled.\n")
+                return False
 
             # create a new user with a unique uid
             uid = Login.get_highest_uid() + 1
-            pwd = Login.hashPswd(password, str(uid))
             Connection.cursor.execute("""
             INSERT INTO users(usr, pwd, name, email, city, timezone) VALUES
                     (:usr, :pwd, :name, :email, :city, :timezone);
             """, {
                 "usr": uid,
-                "pwd": pwd,
+                "pwd": password,
                 "name": name,
                 "email": email,
                 "city": city,
@@ -137,41 +135,6 @@ class Login:
             })
             Connection.connection.commit()
             print(f"\nWelcome, {name}.")
-            print(f"Your new user id is {uid}. You will need this id later to log in.\n")
-            return str(uid)
-
-
-    @staticmethod
-    def authenticate_user(userid: int, password: str) -> bool:
-        """Authenticates a user's login credentials
-
-        Args:
-            userid (int): id of the user attempting to login
-            password (str): attempted password (unhashed)
-
-        Returns:
-            bool: True if the user login credentials are valid
-        """
-        assert Connection.is_connected()
-
-        # check if the user exists
-        Connection.cursor.execute(
-            "SELECT pwd, name FROM users WHERE usr = :userid;",
-            {"userid": userid}
-        )
-        result = Connection.cursor.fetchone()
-        if result is None:
-            print("No user with that id exists!")
-            return False
-
-        # otherwise, the query returned a result and the user exists
-        # the correrct password is in the first column (index 0)
-        correctPswd = result[0]
-        if Login.hashPswd(password, str(userid)) == correctPswd:
-            # authentication successful
-            print(f"Welcome back, {result[1]}.\n")
+            print(f"Your new user ID is {uid}. You will need this ID later to log in.\n")
+            Login.userID = uid
             return True
-        else:
-            # Passwords don't match
-            print("Incorrect password.")
-            return False
