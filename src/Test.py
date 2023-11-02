@@ -4,7 +4,8 @@ from Setup import Setup
 
 class Test:
     @staticmethod
-    def insert_test_data():
+    def insert_test_data() -> None:
+        """Populates all the db tables with mock data"""
         assert Connection.is_connected()
         
         # create tables
