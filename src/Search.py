@@ -39,7 +39,14 @@ class Search:
         Connection.cursor.execute(query, params)
         results = Connection.cursor.fetchall()
 
-        Search.interact_with_tweet(results, 5)
+        column_names = [description[0]
+                        for description in Connection.cursor.description]
+        result_list = []
+        for row in results:
+            row_dict = dict(zip(column_names, row))
+            result_list.append(row_dict)
+
+        Search.interact_with_tweet(result_list, 5)
 
     @staticmethod
     def interact_with_tweet(twts, num_display):
@@ -53,10 +60,10 @@ class Search:
             print("="*32)
             for tweet in twts[offset:offset + num_display]:
                 print()
-                print(f"ID: {tweet[1]}")
-                print(f"    {tweet[0]} (+{tweet[2]})")
-                print(f"    {tweet[-1]}")
-                print(f"    {tweet[3]}")
+                print(f"ID: {tweet['tid']}")
+                print(f"    {tweet['name']} (+{tweet['writer']})")
+                print(f"    {tweet['text']}")
+                print(f"    {tweet['tdate']}")
                 print()
                 print("="*32)
 
@@ -80,6 +87,7 @@ class Search:
                 break
             else:
                 print("INVALID Command -_-")
+                continue
 
             Shell.clear()
 
