@@ -1,7 +1,6 @@
 import os
 from Connection import Connection
 from Setup import Setup
-from Login import Login
 from Shell import Shell
 
 
