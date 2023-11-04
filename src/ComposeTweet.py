@@ -43,6 +43,14 @@ class ComposeTweet:
             tid = ComposeTweet.countTweets() + 1 # the tid for new tweet/reply
             ComposeTweet.addTweetToTweetsDB(tid, tweet, replyTo)
 
+
+    @staticmethod
+    def createRetweet(tid:int) -> None:
+        if ComposeTweet.contains("SELECT tid FROM retweets WHERE tid = ? AND usr = ?;", (tid, Login.userID)): 
+            print("You have already retweeted this tweet.")
+        else:
+            ComposeTweet.addRetweetToDB(tid)
+        
         
     @staticmethod
     def addTweetToTweetsDB(tid:int, tweet:str, replyTo:int) -> None:
@@ -123,7 +131,16 @@ class ComposeTweet:
             Connection.cursor.execute(insert_query, (tid, hashtag))
             
         Connection.connection.commit()
+    
+    
+    @staticmethod
+    def addRetweetToDB(tid:int):
+        insert_query = "INSERT INTO retweets (usr, tid, rdate) VALUES (?, ?, ?)"
+        Connection.cursor.execute(insert_query, (Login.userID, tid, datetime.date.today()))
+        Connection.connection.commit()
         
+        print("Your retweet has successfully been posted! ")
+    
         
     @staticmethod
     def contains(query:str, values:tuple) -> bool:
