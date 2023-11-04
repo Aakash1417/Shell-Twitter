@@ -1,4 +1,5 @@
 import os
+from Connection import Connection
 from Login import Login
 
 
@@ -14,13 +15,7 @@ class Shell:
             os.system('cls')
 
     @staticmethod
-    def main_menu():
-        """
-            Presents a main menu with various options based on the user's login status
-
-            Returns:
-                A list of available menu options
-        """
+    def get_options():
         options = []
         if Login.userID is None:
             options.append("login")
@@ -33,7 +28,46 @@ class Shell:
             options.append("logout")
         options.append("help")
         options.append("exit")
+        return options
 
+    @staticmethod
+    def main_menu_do(cmd):
+        """
+            Presents a main menu with various options based on the user's login status
+
+            Returns:
+                A list of available menu options
+        """
+        options = Shell.get_options()
+        if cmd in options:
+            if cmd == "login":
+                Login.login()
+            elif cmd == "register":
+                Login.register()
+            elif cmd == "searchtweets":
+                pass
+            elif cmd == "compose":
+                pass
+            elif cmd == "searchusers":
+                pass
+            elif cmd == "followers":
+                pass
+            elif cmd == "logout":
+                pass
+            elif cmd == "help":
+                Shell.print_menu()
+            elif cmd == "exit":
+                print("Closing Program :(")
+                Connection.close()
+                exit()
+        elif cmd == "clear":
+            Shell.clear()
+        else:
+            print("INVALID Command -_-")
+
+    @staticmethod
+    def print_menu():
+        options = Shell.get_options()
         print("="*32)
         print()
         for option in options:
