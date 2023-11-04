@@ -15,6 +15,7 @@ class ComposeTweet:
         Returns:
             int: maximum tid
         """
+        assert Connection.is_connected()
         query = "SELECT MAX(tid) FROM tweets"
         Connection.cursor.execute(query)
         entry = Connection.cursor.fetchone()
@@ -61,6 +62,7 @@ class ComposeTweet:
             tweet (str): the content of the tweet
             replyTo (int): the tid of tweet that the tweet is replying to (None if the tweet is not replying to another tweet)
         """
+        assert Connection.is_connected()
         insert_query = "INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES (?, ?, ?, ?, ?)"
         Connection.cursor.execute(insert_query, (tid, Login.userID, datetime.date.today(), tweet, replyTo))
         Connection.connection.commit()
@@ -104,6 +106,7 @@ class ComposeTweet:
         Args:
             hashtag (str): the term
         """
+        assert Connection.is_connected()
         # Check if the hashtag exists in DB
         query = "SELECT term FROM hashtags WHERE term = ?;"
         containsDuplicate = ComposeTweet.contains(query, (hashtag,))
@@ -123,6 +126,7 @@ class ComposeTweet:
             tid (int): the tweet id
             hashtag (str): the hashtag term found in the tweet
         """
+        assert Connection.is_connected()
         query = "SELECT tid,term FROM mentions WHERE tid = ? AND term = ?;"
         containsDuplicate = ComposeTweet.contains(query, (tid, hashtag))
 
@@ -135,6 +139,7 @@ class ComposeTweet:
     
     @staticmethod
     def addRetweetToDB(tid:int):
+        assert Connection.is_connected()
         insert_query = "INSERT INTO retweets (usr, tid, rdate) VALUES (?, ?, ?)"
         Connection.cursor.execute(insert_query, (Login.userID, tid, datetime.date.today()))
         Connection.connection.commit()
@@ -153,6 +158,7 @@ class ComposeTweet:
         Returns:
             bool: whether it contains an item with values given
         """
+        assert Connection.is_connected()
         Connection.cursor.execute(query, values)
         result = Connection.cursor.fetchone()
         
