@@ -16,6 +16,7 @@ class ComposeTweet:
         Returns:
             int: maximum tid
         """
+        assert Connection.is_connected()
         query = "SELECT MAX(tid) FROM tweets"
         Connection.cursor.execute(query)
         entry = Connection.cursor.fetchone()
@@ -46,6 +47,13 @@ class ComposeTweet:
             ComposeTweet.addTweetToTweetsDB(tid, tweet, replyTo)
 
     @staticmethod
+    def createRetweet(tid:int) -> None:
+        if ComposeTweet.contains("SELECT tid FROM retweets WHERE tid = ? AND usr = ?;", (tid, Login.userID)): 
+            print("You have already retweeted this tweet.")
+        else:
+            ComposeTweet.addRetweetToDB(tid)
+   
+    @staticmethod
     def addTweetToTweetsDB(tid: int, tweet: str, replyTo: int) -> None:
         """it will add tweet to tweets table
 
@@ -54,6 +62,7 @@ class ComposeTweet:
             tweet (str): the content of the tweet
             replyTo (int): the tid of tweet that the tweet is replying to (None if the tweet is not replying to another tweet)
         """
+        assert Connection.is_connected()
         insert_query = "INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES (?, ?, ?, ?, ?)"
         Connection.cursor.execute(
             insert_query, (tid, Login.userID, datetime.date.today(), tweet, replyTo))
@@ -98,6 +107,7 @@ class ComposeTweet:
         Args:
             hashtag (str): the term
         """
+        assert Connection.is_connected()
         # Check if the hashtag exists in DB
         query = "SELECT term FROM hashtags WHERE term = ?;"
         containsDuplicate = ComposeTweet.contains(query, (hashtag,))
@@ -116,6 +126,7 @@ class ComposeTweet:
             tid (int): the tweet id
             hashtag (str): the hashtag term found in the tweet
         """
+        assert Connection.is_connected()
         query = "SELECT tid,term FROM mentions WHERE tid = ? AND term = ?;"
         containsDuplicate = ComposeTweet.contains(query, (tid, hashtag))
 
@@ -124,7 +135,16 @@ class ComposeTweet:
             Connection.cursor.execute(insert_query, (tid, hashtag))
 
         Connection.connection.commit()
-
+    
+    @staticmethod
+    def addRetweetToDB(tid:int):
+        assert Connection.is_connected()
+        insert_query = "INSERT INTO retweets (usr, tid, rdate) VALUES (?, ?, ?)"
+        Connection.cursor.execute(insert_query, (Login.userID, tid, datetime.date.today()))
+        Connection.connection.commit()
+        
+        print("Your retweet has successfully been posted! ")
+    
     @staticmethod
     def contains(query: str, values: tuple) -> bool:
         """will find if table contains values
@@ -136,6 +156,7 @@ class ComposeTweet:
         Returns:
             bool: whether it contains an item with values given
         """
+        assert Connection.is_connected()
         Connection.cursor.execute(query, values)
         result = Connection.cursor.fetchone()
 
