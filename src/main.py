@@ -16,37 +16,10 @@ def main():
     Setup.add_mock_users()
 
     print("Welcome to crystal methadata!")
-
+    Shell.print_menu()
     while True:
-        options = Shell.main_menu()
         cmd = input(">>> ").strip().lower()
-
-        if cmd in options:
-            if cmd == "login":
-                Login.login()
-            elif cmd == "register":
-                Login.register()
-            elif cmd == "searchtweets":
-                pass
-            elif cmd == "compose":
-                pass
-            elif cmd == "searchusers":
-                pass
-            elif cmd == "followers":
-                pass
-            elif cmd == "logout":
-                pass
-            elif cmd == "help":
-                pass
-            elif cmd == "exit":
-                break
-        elif cmd == "clear":
-            Shell.clear()
-        else:
-            print("INVALID Command -_-")
-            continue
-
-    Connection.close()
+        Shell.main_menu_do(cmd)
 
 
 if __name__ == "__main__":
