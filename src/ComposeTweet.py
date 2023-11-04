@@ -7,8 +7,9 @@ from Login import Login
 from Test import Test
 from Setup import Setup
 
+
 class ComposeTweet:
-    @staticmethod              
+    @staticmethod
     def countTweets() -> int:
         """Counts the number of tweets and finds maximum tid
 
@@ -18,13 +19,14 @@ class ComposeTweet:
         query = "SELECT MAX(tid) FROM tweets"
         Connection.cursor.execute(query)
         entry = Connection.cursor.fetchone()
-        
-        if entry == None: return 0
-        else: return entry[0]
-    
-    
+
+        if entry == None:
+            return 0
+        else:
+            return entry[0]
+
     @staticmethod
-    def createTweet(replyTo:int = None) -> None:
+    def createTweet(replyTo: int = None) -> None:
         """The user wants to create a separate tweet or reply to a tweet and will prompt user for their message
 
         Args:
@@ -32,20 +34,19 @@ class ComposeTweet:
         """
         tweet = ""
         # checks if it is a tweet or reply (checks if tweet being replied to exists)
-        if replyTo == None: tweet = input("Enter tweet message: ")
-        elif ComposeTweet.contains("SELECT tid FROM tweets WHERE tid = ?;", (replyTo,)): 
+        if replyTo == None:
+            tweet = input("Enter tweet message: ")
+        elif ComposeTweet.contains("SELECT tid FROM tweets WHERE tid = ?;", (replyTo,)):
             tweet = input("Enter reply: ")
         else:
             print("Tweet does not exist.")
-        
 
         if tweet != "":
-            tid = ComposeTweet.countTweets() + 1 # the tid for new tweet/reply
+            tid = ComposeTweet.countTweets() + 1  # the tid for new tweet/reply
             ComposeTweet.addTweetToTweetsDB(tid, tweet, replyTo)
 
-        
     @staticmethod
-    def addTweetToTweetsDB(tid:int, tweet:str, replyTo:int) -> None:
+    def addTweetToTweetsDB(tid: int, tweet: str, replyTo: int) -> None:
         """it will add tweet to tweets table
 
         Args:
@@ -54,17 +55,19 @@ class ComposeTweet:
             replyTo (int): the tid of tweet that the tweet is replying to (None if the tweet is not replying to another tweet)
         """
         insert_query = "INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES (?, ?, ?, ?, ?)"
-        Connection.cursor.execute(insert_query, (tid, Login.userID, datetime.date.today(), tweet, replyTo))
+        Connection.cursor.execute(
+            insert_query, (tid, Login.userID, datetime.date.today(), tweet, replyTo))
         Connection.connection.commit()
-        
-        if replyTo == None: print("Your tweet has successfully been posted!")
-        else: print("Your reply has successfully been posted!")
-        
+
+        if replyTo == None:
+            print("Your tweet has successfully been posted!")
+        else:
+            print("Your reply has successfully been posted!")
+
         ComposeTweet.findHashTags(tid, tweet)
-    
-    
-    @staticmethod    
-    def findHashTags(tid:int, text:str) -> None:
+
+    @staticmethod
+    def findHashTags(tid: int, text: str) -> None:
         """Finds all the hashtags in the message
 
         Args:
@@ -73,7 +76,7 @@ class ComposeTweet:
         """
         words = text.split()
         hashtags = []
-        
+
         for word in words:
             if word[0].startswith("#"):
                 for i in range(1, len(word)):
@@ -87,10 +90,9 @@ class ComposeTweet:
             for hashtag in hashtags:
                 ComposeTweet.addHashtagsToHashtagsDB(hashtag)
                 ComposeTweet.addHashtagsToMentionsDB(tid, hashtag)
-        
-    
+
     @staticmethod
-    def addHashtagsToHashtagsDB(hashtag:str) -> None:
+    def addHashtagsToHashtagsDB(hashtag: str) -> None:
         """adds hashtag term to hashtags table
 
         Args:
@@ -99,16 +101,15 @@ class ComposeTweet:
         # Check if the hashtag exists in DB
         query = "SELECT term FROM hashtags WHERE term = ?;"
         containsDuplicate = ComposeTweet.contains(query, (hashtag,))
-        
-        if not containsDuplicate: #hashtag does not exist
+
+        if not containsDuplicate:  # hashtag does not exist
             insert_query = "INSERT INTO hashtags (term) VALUES (?);"
             Connection.cursor.execute(insert_query, (hashtag,))
-        
+
         Connection.connection.commit()
-    
-    
+
     @staticmethod
-    def addHashtagsToMentionsDB(tid:int, hashtag:str) -> None:
+    def addHashtagsToMentionsDB(tid: int, hashtag: str) -> None:
         """adds hashtag term and the tweet id to mentions table
 
         Args:
@@ -118,15 +119,14 @@ class ComposeTweet:
         query = "SELECT tid,term FROM mentions WHERE tid = ? AND term = ?;"
         containsDuplicate = ComposeTweet.contains(query, (tid, hashtag))
 
-        if not(containsDuplicate): # tweet doesn't contain the same hashtag
+        if not (containsDuplicate):  # tweet doesn't contain the same hashtag
             insert_query = 'INSERT INTO mentions (tid, term) VALUES (?, ?);'
             Connection.cursor.execute(insert_query, (tid, hashtag))
-            
+
         Connection.connection.commit()
-        
-        
+
     @staticmethod
-    def contains(query:str, values:tuple) -> bool:
+    def contains(query: str, values: tuple) -> bool:
         """will find if table contains values
 
         Args:
@@ -138,10 +138,13 @@ class ComposeTweet:
         """
         Connection.cursor.execute(query, values)
         result = Connection.cursor.fetchone()
-        
-        if result == None: return False
-        else: return True
-        
+
+        if result == None:
+            return False
+        else:
+            return True
+
+
 def test() -> None:
     """Creates test tables
     """
@@ -151,22 +154,25 @@ def test() -> None:
     Setup.define_tables()
     Test.insert_test_data()
 
+
 if __name__ == "__main__":
-    
+
     test()
-    
+
     # manually enter User ID
     usr = input("User ID: ")
     Login.userID = int(usr)
 
-    while(True):
+    while (True):
         code = input("tweet/reply <tid>?")
         inputs = code.split()
         if (inputs[0] == "tweet" and len(inputs) == 1):
             ComposeTweet.createTweet()
         elif (inputs[0] == "reply" and inputs[1].isnumeric() and len(inputs) == 2):
             ComposeTweet.createTweet(int(inputs[1]))
-        elif (inputs[0] == "exit"): break
-        else: print("Invalid command.")
-        
+        elif (inputs[0] == "exit"):
+            break
+        else:
+            print("Invalid command.")
+
         Connection.close()
