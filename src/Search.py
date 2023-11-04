@@ -1,7 +1,9 @@
 from Connection import Connection
 import os
+import math
 from Setup import Setup
 from Login import Login
+from Shell import Shell
 from Test import Test
 
 
@@ -13,7 +15,7 @@ class Search:
 
         conditions = []
         params = []
-        tables = set(["tweets t"])
+        tables = set(["tweets t", "users u"])
         for keyword in keywords:
             if keyword.startswith("#"):
                 tables.add("mentions m")
@@ -28,20 +30,58 @@ class Search:
         where_clause = " OR ".join(conditions)
 
         query = f"""
-            SELECT DISTINCT t.tid, t.writer, t.tdate, t.text
+            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text
             FROM {table_clause}
-            WHERE {where_clause}
+            WHERE ({where_clause})
+            AND u.usr = t.writer
             ORDER BY t.tdate DESC;"""
-        print(query)
-        print(params)
 
         Connection.cursor.execute(query, params)
         results = Connection.cursor.fetchall()
-        print(results)
+
+        Search.interact_with_tweet(results, 5)
 
     @staticmethod
-    def display_tweets(twts):
-        pass
+    def interact_with_tweet(twts, num_display):
+        # scrollUP
+        # scrolldown
+        # retweet
+        # reply
+        # cancel
+        offset = 0
+        while True:
+            print("="*32)
+            for tweet in twts[offset:offset + num_display]:
+                print()
+                print(f"ID: {tweet[1]}")
+                print(f"    {tweet[0]} (+{tweet[2]})")
+                print(f"    {tweet[-1]}")
+                print(f"    {tweet[3]}")
+                print()
+                print("="*32)
+
+            print(
+                f"Showing page {math.ceil(offset / num_display) + 1} of {math.ceil(len(twts)/num_display)}")
+            print()
+
+            cmd = input("type the thing bro: ").strip().lower().split()
+
+            if cmd[0] == 'scrolldown':
+                offset = min(offset + num_display, len(twts) - 1)
+            elif cmd[0] == 'scrollup':
+                offset = max(offset - num_display, 0)
+            elif cmd[0] == 'reply':
+                # Implement reply functionality here using the reply_id
+                pass
+            elif cmd[0] == 'retweet':
+                # Implement retweet functionality here using the retweet_id
+                pass
+            elif cmd[0] == 'cancel':
+                break
+            else:
+                print("INVALID Command -_-")
+
+            Shell.clear()
 
 
 def AddTestData():
@@ -52,8 +92,9 @@ def AddTestData():
     Connection.cursor.executescript(insert_query)
 
     insert_query = f"""INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES 
-                    (1, 1, 2023-10-27, 'This is a #test tweet.', NULL),
-                    (2, 2, 2023-3-27, 'This is #another tweet that I am reply to someone else with', 1);"""
+                    (1, 1, '2023-01-27', 'This is a #test tweet.', NULL),
+                    (2, 2, '2023-02-27', 'This is #another tweet that I am reply to someone else with', NULL),
+                    (3, 1, '2023-03-27', 'test of 3', NULL);"""
     Connection.cursor.executescript(insert_query)
 
     hashtags_data = [
@@ -73,7 +114,6 @@ def AddTestData():
     Connection.cursor.executemany(
         "INSERT INTO mentions VALUES (?,?)", mentions_data)
     Connection.connection.commit()
-    print("done")
 
 
 if __name__ == "__main__":
