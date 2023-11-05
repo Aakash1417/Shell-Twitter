@@ -1,9 +1,12 @@
 import os
 from Connection import Connection
 from Login import Login
+from Search import Search
 
 
 class Shell:
+    current_state = None
+
     @staticmethod
     def clear():
         """
@@ -27,6 +30,7 @@ class Shell:
             options.append("followers")
             options.append("logout")
         options.append("help")
+        options.append("clear")
         options.append("exit")
         return options
 
@@ -45,7 +49,7 @@ class Shell:
             elif cmd == "register":
                 Login.register()
             elif cmd == "searchtweets":
-                pass
+                Search.search_for_tweets()
             elif cmd == "compose":
                 pass
             elif cmd == "searchusers":
@@ -60,14 +64,18 @@ class Shell:
                 print("Closing Program :(")
                 Connection.close()
                 exit()
-        elif cmd == "clear":
-            Shell.clear()
+            elif cmd == "clear":
+                Shell.clear()
         else:
             print("INVALID Command -_-")
 
     @staticmethod
     def print_menu():
         options = Shell.get_options()
+        if Shell.current_state == 'viewTweet':
+            options = options[:-3] + ["scrollup", "scrolldown",
+                                      "reply", "retweet"] + options[-3:]
+
         print("="*32)
         print()
         for option in options:
