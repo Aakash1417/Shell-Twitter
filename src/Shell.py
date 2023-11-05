@@ -1,6 +1,7 @@
 import os
 from Connection import Connection
 from Login import Login
+from Search import Search
 
 
 class Shell:
@@ -27,6 +28,7 @@ class Shell:
             options.append("followers")
             options.append("logout")
         options.append("help")
+        options.append("clear")
         options.append("exit")
         return options
 
@@ -45,7 +47,7 @@ class Shell:
             elif cmd == "register":
                 Login.register()
             elif cmd == "searchtweets":
-                pass
+                Search.search_for_tweets()
             elif cmd == "compose":
                 pass
             elif cmd == "searchusers":
@@ -60,8 +62,8 @@ class Shell:
                 print("Closing Program :(")
                 Connection.close()
                 exit()
-        elif cmd == "clear":
-            Shell.clear()
+            elif cmd == "clear":
+                Shell.clear()
         else:
             print("INVALID Command -_-")
 

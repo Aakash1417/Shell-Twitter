@@ -3,7 +3,6 @@ import os
 import math
 from Setup import Setup
 from Login import Login
-from Shell import Shell
 from Test import Test
 
 
@@ -56,25 +55,37 @@ class Search:
         # reply
         # cancel
         offset = 0
+        print_options = True
         while True:
-            print("="*32)
-            for tweet in twts[offset:offset + num_display]:
-                print()
-                print(f"ID: {tweet['tid']}")
-                print(f"    {tweet['name']} (+{tweet['writer']})")
-                print(f"    {tweet['text']}")
-                print(f"    {tweet['tdate']}")
-                print()
+            if print_options:
                 print("="*32)
+                for tweet in twts[offset:offset + num_display]:
+                    print()
+                    print(f"ID: {tweet['tid']}")
+                    print(f"    {tweet['name']} (+{tweet['writer']})")
+                    print(f"    {tweet['text']}")
+                    print(f"    {tweet['tdate']}")
+                    print()
+                    print("="*32)
 
-            print(
-                f"Showing page {math.ceil(offset / num_display) + 1} of {math.ceil(len(twts)/num_display)}")
-            print()
+                print(
+                    f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(twts)/num_display),1)}")
+                print()
 
-            cmd = input("type the thing bro: ").strip().lower().split()
+            cmd = input(">>> ").strip().lower().split()
 
-            if cmd[0] == 'scrolldown':
-                offset = min(offset + num_display, len(twts) - 1)
+            print_options = True
+            from Shell import Shell
+
+            if cmd[0] in Shell.get_options():
+                Shell.main_menu_do(cmd[0])
+                if (cmd[0] not in ['help', 'clear']):
+                    return
+                else:
+                    print_options = False
+                    continue
+            elif cmd[0] == 'scrolldown':
+                offset = min(min(offset + num_display, len(twts) - 1), 0)
             elif cmd[0] == 'scrollup':
                 offset = max(offset - num_display, 0)
             elif cmd[0] == 'reply':
@@ -83,13 +94,9 @@ class Search:
             elif cmd[0] == 'retweet':
                 # Implement retweet functionality here using the retweet_id
                 pass
-            elif cmd[0] == 'cancel':
-                break
             else:
                 print("INVALID Command -_-")
                 continue
-
-            Shell.clear()
 
 
 def AddTestData():
@@ -130,9 +137,8 @@ if __name__ == "__main__":
 
     Setup.drop_tables()
     Setup.define_tables()
-    # Test.add_mock_users()
+    Test.insert_test_data()
 
-    AddTestData()
     Login.userID = 2
 
     Search.search_for_tweets()
