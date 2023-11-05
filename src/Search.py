@@ -56,6 +56,8 @@ class Search:
         # cancel
         offset = 0
         print_options = True
+        from Shell import Shell
+        Shell.current_state = 'viewTweet'
         while True:
             if print_options:
                 print("="*32)
@@ -75,24 +77,25 @@ class Search:
             cmd = input(">>> ").strip().lower().split()
 
             print_options = True
-            from Shell import Shell
 
             if cmd[0] in Shell.get_options():
                 Shell.main_menu_do(cmd[0])
                 if (cmd[0] not in ['help', 'clear']):
+                    Shell.current_state = None
                     return
                 else:
                     print_options = False
                     continue
             elif cmd[0] == 'scrolldown':
-                offset = min(min(offset + num_display, len(twts) - 1), 0)
+                if offset + num_display < len(twts):
+                    offset += num_display
             elif cmd[0] == 'scrollup':
                 offset = max(offset - num_display, 0)
             elif cmd[0] == 'reply':
-                # Implement reply functionality here using the reply_id
+                # Implement reply functionality here
                 pass
             elif cmd[0] == 'retweet':
-                # Implement retweet functionality here using the retweet_id
+                # Implement retweet functionality here
                 pass
             else:
                 print("INVALID Command -_-")
@@ -109,7 +112,11 @@ def AddTestData():
     insert_query = f"""INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES 
                     (1, 1, '2023-01-27', 'This is a #test tweet.', NULL),
                     (2, 2, '2023-02-27', 'This is #another tweet that I am reply to someone else with', NULL),
-                    (3, 1, '2023-03-27', 'test of 3', NULL);"""
+                    (3, 1, '2023-03-27', 'test of 3', NULL),
+                    (4, 1, '2023-04-27', 'test of 3', NULL),
+                    (5, 1, '2023-05-27', 'test of 3', NULL),
+                    (6, 1, '2023-06-27', 'test of 3', NULL),
+                    (7, 1, '2023-07-27', 'test of 3', NULL);"""
     Connection.cursor.executescript(insert_query)
 
     hashtags_data = [
@@ -124,7 +131,11 @@ def AddTestData():
         (1, 'test'),
         (1, 'another'),
         (2, 'another'),
-        (2, 'thingy'),
+        (3, 'another'),
+        (4, 'another'),
+        (5, 'another'),
+        (6, 'another'),
+        (7, 'another'),
     ]
     Connection.cursor.executemany(
         "INSERT INTO mentions VALUES (?,?)", mentions_data)
@@ -137,7 +148,8 @@ if __name__ == "__main__":
 
     Setup.drop_tables()
     Setup.define_tables()
-    Test.insert_test_data()
+    # Test.insert_test_data()
+    AddTestData()
 
     Login.userID = 2
 

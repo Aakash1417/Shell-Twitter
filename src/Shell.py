@@ -5,6 +5,8 @@ from Search import Search
 
 
 class Shell:
+    current_state = None
+
     @staticmethod
     def clear():
         """
@@ -70,6 +72,10 @@ class Shell:
     @staticmethod
     def print_menu():
         options = Shell.get_options()
+        if Shell.current_state == 'viewTweet':
+            options = options[:-3] + ["scrollup", "scrolldown",
+                                      "reply", "retweet"] + options[-3:]
+
         print("="*32)
         print()
         for option in options:
