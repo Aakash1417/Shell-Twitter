@@ -8,7 +8,7 @@ from Test import Test
 
 class Search:
     @staticmethod
-    def search_for_tweets():
+    def search_for_tweets() -> None:
         """This function prompts the user for keywords to search for and displays the results.
             It also provides various options for interacting with the results.
         """
@@ -48,87 +48,11 @@ class Search:
             row_dict = dict(zip(column_names, row))
             result_list.append(row_dict)
 
-        Search.interact_with_tweet(result_list, 5)
+        Search.interact(result_list, 5, [
+            "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
 
     @staticmethod
-    def interact_with_tweet(twts, num_display):
-        """This function displays a list of tweets and providing various options for interacting with them.
-        It takes user input to navigate through the tweet and perform actions.
-
-        Parameters:
-            twts (list of dictionaries): A list of tweet objects
-            num_display (int): The number of tweets to display per page
-        """
-        offset = 0
-        print_options = True
-        from Shell import Shell
-        while True:
-            if print_options:
-                print("="*32)
-                for idx, tweet in enumerate(twts[offset:offset + num_display]):
-                    print(f"{idx+offset+1}]")
-                    print(f"\t{tweet['tid']}")
-                    print(f"\t{tweet['name']} (+{tweet['writer']})")
-                    print(f"\t{tweet['text']}")
-                    print()
-                    print(f"\t{tweet['tdate']}")
-                    print()
-                    print("="*32)
-
-                print(
-                    f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(twts)/num_display),1)}")
-                print()
-
-            cmd = input(">>> ").strip().lower().split()
-
-            print_options = True
-
-            if cmd[0] in Shell.get_main_options():
-                Shell.main_menu_do(
-                    cmd[0], ["scrollup", "scrolldown", "select", "reply", "retweet"])
-                if (cmd[0] not in ['help', 'clear']):
-                    return
-                else:
-                    print_options = False
-                    continue
-            elif cmd[0] == 'scrolldown':
-                if offset + num_display < len(twts):
-                    offset += num_display
-            elif cmd[0] == 'scrollup':
-                offset = max(offset - num_display, 0)
-            elif cmd[0] == 'reply':
-                # Implement reply functionality here
-                pass
-            elif cmd[0] == 'retweet':
-                # Implement retweet functionality here
-                pass
-            elif cmd[0] == 'select':
-                print_options = False
-                try:
-                    index = int(cmd[1])
-                    if index > len(twts)+1 or index < 1:
-                        print("INVALID id")
-                        continue
-                    tid = twts[index-1]['tid']
-                except:
-                    print("INVALID id")
-                    continue
-                Connection.cursor.execute(
-                    "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
-                retweets_count = Connection.cursor.fetchone()[0]
-
-                Connection.cursor.execute(
-                    "SELECT COUNT(*) FROM tweets WHERE replyto = ?", (tid,))
-                replies_count = Connection.cursor.fetchone()[0]
-
-                print(
-                    f"Tweet +{tid} has {retweets_count} retweets and {replies_count} replies")
-            else:
-                print("INVALID Command -_-")
-                continue
-
-    @staticmethod
-    def search_for_users():
+    def search_for_users() -> None:
         """Searches for users whose name or city match a keyword
 
         Args:
@@ -167,27 +91,25 @@ class Search:
             row_dict = dict(zip(column_names, row))
             result_list.append(row_dict)
 
-        Search.interact_with_user(result_list, 5)
+        Search.interact(result_list, 5, [
+                        "scrollup", "scrolldown", "select"], 'user')
 
     @staticmethod
-    def interact_with_user(users, num_display):
+    def interact(lst: [{}], num_display: int, additional_options: [str], item_type: int) -> None:
+        """This function provides various options for interacting with the results of a search
+
+        Parameters:
+            lst (list of dictionaries): A list of tweet objects
+            num_display (int): The number of tweets to display per page
+            additional_options (list of strings): A list of additional options to display
+            item_type (string): The type of item being displayed (tweet or user)
+        """
         offset = 0
         print_options = True
 
         while True:
             if print_options:
-                print("="*32)
-                for idx, user in enumerate(users[offset:offset + num_display]):
-                    print(f"{idx+offset+1}]")
-                    print(f"\t+{user['usr']}")
-                    print(f"\t{user['name']}")
-                    print(f"\t{user['city']}")
-                    print()
-                    print("="*32)
-
-                print(
-                    f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(users)/num_display),1)}")
-                print()
+                Search.print_item(lst, num_display, offset, item_type)
 
             cmd = input(">>> ").strip().lower().split()
 
@@ -196,20 +118,85 @@ class Search:
             from Shell import Shell
             if cmd[0] in Shell.get_main_options():
                 Shell.main_menu_do(
-                    cmd[0], ["scrollup", "scrolldown"])
+                    cmd[0], additional_options)
                 if (cmd[0] not in ['help', 'clear']):
                     return
                 else:
                     print_options = False
                     continue
             elif cmd[0] == 'scrolldown':
-                if offset + num_display < len(users):
+                if offset + num_display < len(lst):
                     offset += num_display
             elif cmd[0] == 'scrollup':
                 offset = max(offset - num_display, 0)
+
+            elif cmd[0] == 'reply' and item_type == 'tweet':
+                # Implement reply functionality here
+                pass
+            elif cmd[0] == 'retweet' and item_type == 'tweet':
+                # Implement retweet functionality here
+                pass
+            elif cmd[0] == 'select' and item_type == 'tweet':
+                print_options = False
+                try:
+                    index = int(cmd[1])
+                    if index > len(lst)+1 or index < 1:
+                        print("INVALID id")
+                        continue
+                    tid = lst[index-1]['tid']
+                except:
+                    print("INVALID id")
+                    continue
+                Connection.cursor.execute(
+                    "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
+                retweets_count = Connection.cursor.fetchone()[0]
+
+                Connection.cursor.execute(
+                    "SELECT COUNT(*) FROM tweets WHERE replyto = ?", (tid,))
+                replies_count = Connection.cursor.fetchone()[0]
+
+                print(
+                    f"Tweet +{tid} has {retweets_count} retweets and {replies_count} replies")
             else:
                 print("INVALID Command -_-")
                 continue
+
+    @staticmethod
+    def print_item(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
+        """This function prints a list of tweets or users
+
+        Parameters:
+            lst (list of dictionaries): A list of tweet objects
+            num_display (int): The number of tweets to display per page
+            offset (int): The number of tweets to skip
+            item_type (string): The type of item being displayed (tweet or user)
+        """
+        if len(lst) == 0:
+            print("No results found")
+            print()
+            return
+
+        print("="*32)
+        if item_type == 'tweet':
+            for idx, item in enumerate(lst[offset:offset + num_display]):
+                print(f"{idx+offset+1}]")
+                print(f"\t{item['name']} (+{item['writer']})")
+                print(f"\t{item['text']}")
+                print()
+                print(f"\t{item['tdate']}")
+                print()
+                print("="*32)
+        elif item_type == 'user':
+            for idx, item in enumerate(lst[offset:offset + num_display]):
+                print(f"{idx+offset+1}]")
+                print(f"\t+{item['usr']}")
+                print(f"\t{item['name']}")
+                print(f"\t{item['city']}")
+                print()
+                print("="*32)
+        print(
+            f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(lst)/num_display),1)}")
+        print()
 
 
 def AddTestData():
@@ -272,7 +259,7 @@ if __name__ == "__main__":
     AddTestData()
 
     Login.userID = 2
-    Search.search_for_users()
-    # Search.search_for_tweets()
+    # Search.search_for_users()
+    Search.search_for_tweets()
 
     Connection.close()

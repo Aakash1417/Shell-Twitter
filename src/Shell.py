@@ -2,6 +2,7 @@ import os
 from Connection import Connection
 from Login import Login
 from Search import Search
+from ComposeTweet import ComposeTweet
 
 
 class Shell:
@@ -49,9 +50,9 @@ class Shell:
             elif cmd == "searchtweets":
                 Search.search_for_tweets()
             elif cmd == "compose":
-                pass
+                ComposeTweet.createTweet()
             elif cmd == "searchusers":
-                pass
+                Search.search_for_users()
             elif cmd == "followers":
                 pass
             elif cmd == "logout":
