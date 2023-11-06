@@ -100,11 +100,11 @@ class Search:
             else:
                 print("INVALID Command -_-")
                 continue
-            
+
     @staticmethod
     def search_for_users():
         """Searches for users whose name or city match a keyword
-        
+
         Args:
             None
 
@@ -113,7 +113,7 @@ class Search:
         """
         assert Connection.is_connected()
         keyword = input("Enter a keyword to search users for:")
-        
+
         # users whose name match are shown in ascending order of name length first
         # then, remaining users by ascending order of city length
         query = """
@@ -132,32 +132,30 @@ class Search:
                 END);"""
         Connection.cursor.execute(query, (keyword, keyword, keyword, keyword))
         results = Connection.cursor.fetchall()
-        
-        column_names = [description[0] for description in Connection.cursor.description]
-        
+
+        column_names = [description[0]
+                        for description in Connection.cursor.description]
+
         result_list = []
         for row in results:
             row_dict = dict(zip(column_names, row))
             result_list.append(row_dict)
-            
+
         Search.interact_with_user(result_list, 5)
 
-    
     @staticmethod
     def interact_with_user(users, num_display):
         offset = 0
         print_options = True
-        from Shell import Shell
-        Shell.current_state = 'viewTweet'
-        
+
         while True:
             if print_options:
                 print("="*32)
-                for user in users[offset:offset + num_display]:
-                    print()
-                    print(f"ID: {user['usr']}")
-                    print(f"    {user['name']}")
-                    print(f"    {user['city']}")
+                for idx, user in enumerate(users[offset:offset + num_display]):
+                    print(f"{idx+offset+1}]")
+                    print(f"\t+{user['usr']}")
+                    print(f"\t{user['name']}")
+                    print(f"\t{user['city']}")
                     print()
                     print("="*32)
 
@@ -169,10 +167,11 @@ class Search:
 
             print_options = True
 
-            if cmd[0] in Shell.get_options():
-                Shell.main_menu_do(cmd[0])
+            from Shell import Shell
+            if cmd[0] in Shell.get_main_options():
+                Shell.main_menu_do(
+                    cmd[0], ["scrollup", "scrolldown"])
                 if (cmd[0] not in ['help', 'clear']):
-                    Shell.current_state = None
                     return
                 else:
                     print_options = False
@@ -185,8 +184,6 @@ class Search:
             else:
                 print("INVALID Command -_-")
                 continue
-        
-        pass
 
 
 def AddTestData():
