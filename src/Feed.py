@@ -32,4 +32,22 @@ class Feed:
                         for description in Connection.cursor.description]
 
         Search.parse_results(results, column_names, 5, [
-            "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
+            "scrollup", "scrolldown", "viewinfo", "reply", "retweet"], 'tweet')
+
+
+if __name__ == "__main__":
+    import os
+    from Setup import Setup
+    from Test import Test
+
+    path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
+    Connection.connect(path)
+
+    # create tables
+    Setup.drop_tables()
+    Setup.define_tables()
+
+    Test.insert_test_data()
+
+    Login.userID = 1
+    Feed.show_feed()

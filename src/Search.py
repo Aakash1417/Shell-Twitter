@@ -148,7 +148,7 @@ class Search:
             if cmd[0] in Shell.get_main_options():
                 Shell.main_menu_do(
                     cmd[0], additional_options)
-                if (cmd[0] not in ['help', 'clear']):
+                if (cmd[0] != "help"):
                     return
                 else:
                     print_options = False
