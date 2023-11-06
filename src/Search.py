@@ -9,6 +9,9 @@ from Test import Test
 class Search:
     @staticmethod
     def search_for_tweets():
+        """This function prompts the user for keywords to search for and displays the results.
+            It also provides various options for interacting with the results.
+        """
         keywords = input(
             "Enter keywords to search for (separate multiple keywords with spaces): ").strip().split()
 
@@ -49,23 +52,26 @@ class Search:
 
     @staticmethod
     def interact_with_tweet(twts, num_display):
-        # scrollUP
-        # scrolldown
-        # retweet
-        # reply
-        # cancel
+        """This function displays a list of tweets and providing various options for interacting with them.
+        It takes user input to navigate through the tweet and perform actions.
+
+        Parameters:
+            twts (list of dictionaries): A list of tweet objects
+            num_display (int): The number of tweets to display per page
+        """
         offset = 0
         print_options = True
         from Shell import Shell
         while True:
             if print_options:
                 print("="*32)
-                for tweet in twts[offset:offset + num_display]:
+                for idx, tweet in enumerate(twts[offset:offset + num_display]):
+                    print(f"{idx+offset+1}]")
+                    print(f"\t{tweet['tid']}")
+                    print(f"\t{tweet['name']} (+{tweet['writer']})")
+                    print(f"\t{tweet['text']}")
                     print()
-                    print(f"ID: {tweet['tid']}")
-                    print(f"    {tweet['name']} (+{tweet['writer']})")
-                    print(f"    {tweet['text']}")
-                    print(f"    {tweet['tdate']}")
+                    print(f"\t{tweet['tdate']}")
                     print()
                     print("="*32)
 
@@ -79,7 +85,7 @@ class Search:
 
             if cmd[0] in Shell.get_main_options():
                 Shell.main_menu_do(
-                    cmd[0], ["scrollup", "scrolldown", "reply", "retweet"])
+                    cmd[0], ["scrollup", "scrolldown", "select", "reply", "retweet"])
                 if (cmd[0] not in ['help', 'clear']):
                     return
                 else:
@@ -96,6 +102,27 @@ class Search:
             elif cmd[0] == 'retweet':
                 # Implement retweet functionality here
                 pass
+            elif cmd[0] == 'select':
+                print_options = False
+                try:
+                    index = int(cmd[1])
+                    if index > len(twts)+1 or index < 1:
+                        print("INVALID id")
+                        continue
+                    tid = twts[index-1]['tid']
+                except:
+                    print("INVALID id")
+                    continue
+                Connection.cursor.execute(
+                    "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
+                retweets_count = Connection.cursor.fetchone()[0]
+
+                Connection.cursor.execute(
+                    "SELECT COUNT(*) FROM tweets WHERE replyto = ?", (tid,))
+                replies_count = Connection.cursor.fetchone()[0]
+
+                print(
+                    f"Tweet +{tid} has {retweets_count} retweets and {replies_count} replies")
             else:
                 print("INVALID Command -_-")
                 continue
