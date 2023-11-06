@@ -61,7 +61,7 @@ class Shell:
             elif cmd == "followers":
                 pass
             elif cmd == "logout":
-                pass
+                Login.logout()
             elif cmd == "help":
                 Shell.print_menu(additional_options)
             elif cmd == "exit":
