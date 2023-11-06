@@ -8,7 +8,7 @@ from Test import Test
 
 class Search:
     @staticmethod
-    def search_for_tweets():
+    def search_for_tweets() -> None:
         """This function prompts the user for keywords to search for and displays the results.
             It also provides various options for interacting with the results.
         """
@@ -52,7 +52,7 @@ class Search:
             "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
 
     @staticmethod
-    def search_for_users():
+    def search_for_users() -> None:
         """Searches for users whose name or city match a keyword
 
         Args:
@@ -95,13 +95,14 @@ class Search:
                         "scrollup", "scrolldown", "select"], 'user')
 
     @staticmethod
-    def interact(lst, num_display, additional_options, item_type):
-        """This function allows interaction with tweets and users providing various options for interacting with either.
+    def interact(lst: [{}], num_display: int, additional_options: [str], item_type: int) -> None:
+        """This function provides various options for interacting with the results of a search
 
         Parameters:
-            twts (list of dictionaries): A list of tweet objects
-            additional_options (list of strings): A list of additional options to display
+            lst (list of dictionaries): A list of tweet objects
             num_display (int): The number of tweets to display per page
+            additional_options (list of strings): A list of additional options to display
+            item_type (string): The type of item being displayed (tweet or user)
         """
         offset = 0
         print_options = True
@@ -161,14 +162,21 @@ class Search:
                 continue
 
     @staticmethod
-    def print_item(lst, num_display, offset, item_type):
+    def print_item(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
         """This function prints a list of tweets or users
 
         Parameters:
             lst (list of dictionaries): A list of tweet objects
             num_display (int): The number of tweets to display per page
-            offset (int): The index of the first tweet to display
+            offset (int): The number of tweets to skip
+            item_type (string): The type of item being displayed (tweet or user)
         """
+        if len(lst) == 0:
+            print("No results found")
+            print()
+            return
+
+        print("="*32)
         if item_type == 'tweet':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
