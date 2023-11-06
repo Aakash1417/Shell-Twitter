@@ -51,6 +51,34 @@ class Search:
         Search.interact(result_list, 5, [
             "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
 
+    def search_for_user_tweets(uid:int) -> None:
+        """will search the tweets of the sele
+        
+        Args:
+            uid (int)): the user id of the selected user
+        """
+        query = f"""
+            SELECT u.name, t.tid, t.writer, t.tdate, t.text
+            FROM users u, tweets t
+            WHERE u.usr = t.writer
+            AND t.writer = ?
+            UNION
+            SELECT u.name, rt.tid, t.writer, rt.rdate, t.text
+            FROM users u, retweets rt, tweets t 
+            WHERE t.tid = rt.tid 
+            AND t.writer = u.usr
+            AND rt.usr = ?
+            ORDER BY t.tdate DESC;"""   
+            
+        Connection.cursor.execute(query, (uid,))
+        results = Connection.cursor.fetchall()
+
+        column_names = [description[0]
+                        for description in Connection.cursor.description]
+        
+        Search.parse_results(results, column_names, 3, [
+            "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')   
+    
     @staticmethod
     def search_for_users() -> None:
         """Searches for users whose name or city match a keyword
@@ -107,7 +135,7 @@ class Search:
         column_names = [description[0]
             for description in Connection.cursor.description]
         
-        Search.interact_for_users(results, column_names, len(results), ["scrollup", "scrolldown", "select"], 'user')
+        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select"], 'user')
 
     @staticmethod
     def parse_results(query_results: list(tuple), column_names:list(str), num_display: int, additional_options:list(str), item_type:str):
