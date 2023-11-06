@@ -5,8 +5,6 @@ from Search import Search
 
 
 class Shell:
-    current_state = None
-
     @staticmethod
     def clear():
         """
@@ -18,7 +16,7 @@ class Shell:
             os.system('cls')
 
     @staticmethod
-    def get_options():
+    def get_main_options():
         options = []
         if Login.userID is None:
             options.append("login")
@@ -35,14 +33,14 @@ class Shell:
         return options
 
     @staticmethod
-    def main_menu_do(cmd):
+    def main_menu_do(cmd, additional_options=[]):
         """
             Presents a main menu with various options based on the user's login status
 
             Returns:
                 A list of available menu options
         """
-        options = Shell.get_options()
+        options = Shell.get_main_options()
         if cmd in options:
             if cmd == "login":
                 Login.login()
@@ -59,7 +57,7 @@ class Shell:
             elif cmd == "logout":
                 pass
             elif cmd == "help":
-                Shell.print_menu()
+                Shell.print_menu(additional_options)
             elif cmd == "exit":
                 print("Closing Program :(")
                 Connection.close()
@@ -70,11 +68,9 @@ class Shell:
             print("INVALID Command -_-")
 
     @staticmethod
-    def print_menu():
-        options = Shell.get_options()
-        if Shell.current_state == 'viewTweet':
-            options = options[:-3] + ["scrollup", "scrolldown",
-                                      "reply", "retweet"] + options[-3:]
+    def print_menu(additional_options=[]):
+        options = Shell.get_main_options()
+        options = options[:-3] + additional_options + options[-3:]
 
         print("="*32)
         print()

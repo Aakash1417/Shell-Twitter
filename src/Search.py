@@ -57,7 +57,6 @@ class Search:
         offset = 0
         print_options = True
         from Shell import Shell
-        Shell.current_state = 'viewTweet'
         while True:
             if print_options:
                 print("="*32)
@@ -78,10 +77,10 @@ class Search:
 
             print_options = True
 
-            if cmd[0] in Shell.get_options():
-                Shell.main_menu_do(cmd[0])
+            if cmd[0] in Shell.get_main_options():
+                Shell.main_menu_do(
+                    cmd[0], ["scrollup", "scrolldown", "reply", "retweet"])
                 if (cmd[0] not in ['help', 'clear']):
-                    Shell.current_state = None
                     return
                 else:
                     print_options = False
