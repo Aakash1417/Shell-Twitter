@@ -43,12 +43,8 @@ class Search:
 
         column_names = [description[0]
                         for description in Connection.cursor.description]
-        result_list = []
-        for row in results:
-            row_dict = dict(zip(column_names, row))
-            result_list.append(row_dict)
 
-        Search.interact(result_list, 5, [
+        Search.parse_results(results, column_names, 5, [
             "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
 
     @staticmethod
@@ -107,10 +103,10 @@ class Search:
         column_names = [description[0]
             for description in Connection.cursor.description]
         
-        Search.interact_for_users(results, column_names, len(results), ["scrollup", "scrolldown", "select"], 'user')
+        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select"], 'user')
 
     @staticmethod
-    def parse_results(query_results: list(tuple), column_names:list(str), num_display: int, additional_options:list(str), item_type:str):
+    def parse_results(query_results: [tuple], column_names: [str], num_display: int, additional_options: [str], item_type: str) -> None:
         """parses results of query to be passed in interact 
 
         Args:
@@ -128,7 +124,7 @@ class Search:
         Search.interact(result_list, num_display, additional_options, item_type)
 
     @staticmethod
-    def interact(lst: list(dict), num_display: int, additional_options: list(str), item_type: str) -> None:
+    def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
         """This function provides various options for interacting with the results of a search
 
         Parameters:
@@ -142,7 +138,7 @@ class Search:
 
         while True:
             if print_options:
-                Search.print_item(lst, num_display, offset, item_type)
+                Search.print_items(lst, num_display, offset, item_type)
 
             cmd = input(">>> ").strip().lower().split()
 
@@ -201,7 +197,7 @@ class Search:
                 continue
 
     @staticmethod
-    def print_item(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
+    def print_items(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
         """This function prints a list of tweets or users
 
         Parameters:
@@ -222,7 +218,11 @@ class Search:
                 print(f"\t{item['name']} (+{item['writer']})")
                 print(f"\t{item['text']}")
                 print()
-                print(f"\t{item['tdate']}")
+                if item['retweeter'] is not None:
+                    print(f"\tRetweeted by {item['retweeter']} on", end=" ")
+                else:
+                    print("", end="\t")
+                print(f"{item['tdate']}")
                 print()
                 print("="*32)
         elif item_type == 'user':

@@ -1,6 +1,7 @@
 import os
 from Connection import Connection
 from Login import Login
+from Feed import Feed
 from Search import Search
 from ComposeTweet import ComposeTweet
 
@@ -23,6 +24,7 @@ class Shell:
             options.append("login")
             options.append("register")
         else:
+            options.append("feed")
             options.append("searchtweets")
             options.append("compose")
             options.append("searchusers")
@@ -44,9 +46,12 @@ class Shell:
         options = Shell.get_main_options()
         if cmd in options:
             if cmd == "login":
-                Login.login()
+                if Login.login():
+                    Feed.show_feed()
             elif cmd == "register":
                 Login.register()
+            elif cmd == "feed":
+                Feed.show_feed()
             elif cmd == "searchtweets":
                 Search.search_for_tweets()
             elif cmd == "compose":
