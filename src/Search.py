@@ -59,7 +59,7 @@ class Search:
             None
 
         Returns:
-            List of users whose name or city match
+            None
         """
         assert Connection.is_connected()
         keyword = input("Enter a keyword to search users for:")
@@ -85,23 +85,56 @@ class Search:
 
         column_names = [description[0]
                         for description in Connection.cursor.description]
+        
+        Search.parse_results(results, column_names, 5,
+                            ["scrollup", "scrolldown", "select"], 'user')
 
+        # result_list = []
+        # for row in results:
+        #     row_dict = dict(zip(column_names, row))
+        #     result_list.append(row_dict)
+
+        # Search.interact(result_list, 5, [
+        #                 "scrollup", "scrolldown", "select"], 'user')
+
+    @staticmethod
+    def search_for_followers() -> None:
+        assert Connection.is_connected()
+        query = "SELECT DISTINCT usr, name, city FROM follows, users WHERE flwee = ? AND flwer = usr ORDER BY start_date DESC"
+        Connection.cursor.execute(query, (Login.userID,))
+        results = Connection.cursor.fetchall()
+        
+        column_names = [description[0]
+            for description in Connection.cursor.description]
+        
+        Search.interact_for_users(results, column_names, len(results), ["scrollup", "scrolldown", "select"], 'user')
+
+    @staticmethod
+    def parse_results(query_results: list(tuple), column_names:list(str), num_display: int, additional_options:list(str), item_type:str):
+        """parses results of query to be passed in interact 
+
+        Args:
+            query_result (list(tuple)): the query results
+            column_names (list(str)): the names of the columns returned for query results
+            num_display (int): number of tweets/user to display at once
+            additional_options (list(str)): the additional commands after searching tweets/users
+            item_type (str): the type of items being displayed (user/tweet)
+        """
         result_list = []
-        for row in results:
+        for row in query_results:
             row_dict = dict(zip(column_names, row))
             result_list.append(row_dict)
 
-        Search.interact(result_list, 5, [
-                        "scrollup", "scrolldown", "select"], 'user')
+        Search.interact(result_list, num_display, additional_options, item_type)
 
     @staticmethod
-    def interact(lst: [{}], num_display: int, additional_options: [str], item_type: int) -> None:
+    def interact(lst: list(dict), num_display: int, additional_options: list(str), item_type: str) -> None:
         """This function provides various options for interacting with the results of a search
 
         Parameters:
-            lst (list of dictionaries): A list of tweet objects
-            num_display (int): The number of tweets to display per page
-            additional_options (list of strings): A list of additional options to display
+            lst (list of dictionaries): A list of tweet/user objects
+            num_display (int): The number of tweets/users to display per page
+            additional_options (list of strings): A list of additional commands that can be run at shell
             item_type (string): The type of item being displayed (tweet or user)
         """
         offset = 0
@@ -136,7 +169,13 @@ class Search:
             elif cmd[0] == 'retweet' and item_type == 'tweet':
                 # Implement retweet functionality here
                 pass
-            elif cmd[0] == 'select' and item_type == 'tweet':
+            elif cmd[0] == 'select' and item_type == 'user':
+                # Implement select user functionality here
+                pass
+            elif cmd[0] == 'follow' and item_type == 'user':
+                # Implement follow user functionality here
+                pass
+            elif cmd[0] == 'info' and item_type == 'tweet':
                 print_options = False
                 try:
                     index = int(cmd[1])
