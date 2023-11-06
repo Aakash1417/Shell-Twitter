@@ -4,6 +4,7 @@ import math
 from Setup import Setup
 from Login import Login
 from Test import Test
+from Follow import Follow
 
 
 class Search:
@@ -51,26 +52,21 @@ class Search:
         Search.interact(result_list, 5, [
             "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
 
-    def search_for_user_tweets(uid:int) -> None:
-        """will search the tweets of the sele
+    @staticmethod
+    def search_for_user_tweets(usr:int) -> None:
+        """will search the tweets of the selected user
         
         Args:
-            uid (int)): the user id of the selected user
+            usr (int): the user id of the selected user
         """
         query = f"""
             SELECT u.name, t.tid, t.writer, t.tdate, t.text
             FROM users u, tweets t
             WHERE u.usr = t.writer
             AND t.writer = ?
-            UNION
-            SELECT u.name, rt.tid, t.writer, rt.rdate, t.text
-            FROM users u, retweets rt, tweets t 
-            WHERE t.tid = rt.tid 
-            AND t.writer = u.usr
-            AND rt.usr = ?
             ORDER BY t.tdate DESC;"""   
             
-        Connection.cursor.execute(query, (uid,))
+        Connection.cursor.execute(query, (usr,))
         results = Connection.cursor.fetchall()
 
         column_names = [description[0]
@@ -82,15 +78,17 @@ class Search:
     @staticmethod
     def search_for_users() -> None:
         """Searches for users whose name or city match a keyword
-
-        Args:
-            None
-
-        Returns:
-            None
         """
         assert Connection.is_connected()
-        keyword = input("Enter a keyword to search users for:")
+        keyword = []
+        while True:
+            # ensure that only one keyword is entered
+            keyword =  input("Enter a keyword to search users for:").strip().split()
+            if len(keyword) > 1:
+                print("Please enter only one (1) keyword")
+            else:
+                break
+            
 
         # users whose name match are shown in ascending order of name length first
         # then, remaining users by ascending order of city length
@@ -108,26 +106,21 @@ class Search:
                     WHEN LOWER(name) LIKE '%' || LOWER(?) || '%' THEN LENGTH(name)
                     ELSE LENGTH(city)
                 END);"""
-        Connection.cursor.execute(query, (keyword, keyword, keyword, keyword))
+        Connection.cursor.execute(query, (keyword[0], keyword[0], keyword[0], keyword[0]))
         results = Connection.cursor.fetchall()
 
         column_names = [description[0]
                         for description in Connection.cursor.description]
         
         Search.parse_results(results, column_names, 5,
-                            ["scrollup", "scrolldown", "select"], 'user')
-
-        # result_list = []
-        # for row in results:
-        #     row_dict = dict(zip(column_names, row))
-        #     result_list.append(row_dict)
-
-        # Search.interact(result_list, 5, [
-        #                 "scrollup", "scrolldown", "select"], 'user')
+                            ["scrollup", "scrolldown", "select", "follow"], 'user')
 
     @staticmethod
     def search_for_followers() -> None:
+        """Searches for all followers of current user
+        """
         assert Connection.is_connected()
+        # users whose follow the logged in user in ordered in descending date followed
         query = "SELECT DISTINCT usr, name, city FROM follows, users WHERE flwee = ? AND flwer = usr ORDER BY start_date DESC"
         Connection.cursor.execute(query, (Login.userID,))
         results = Connection.cursor.fetchall()
@@ -135,10 +128,10 @@ class Search:
         column_names = [description[0]
             for description in Connection.cursor.description]
         
-        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select"], 'user')
+        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select", "fol"], 'user')
 
     @staticmethod
-    def parse_results(query_results: list(tuple), column_names:list(str), num_display: int, additional_options:list(str), item_type:str):
+    def parse_results(query_results: [tuple], column_names:[str], num_display: int, additional_options:[str], item_type:str) -> None:
         """parses results of query to be passed in interact 
 
         Args:
@@ -156,7 +149,7 @@ class Search:
         Search.interact(result_list, num_display, additional_options, item_type)
 
     @staticmethod
-    def interact(lst: list(dict), num_display: int, additional_options: list(str), item_type: str) -> None:
+    def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
         """This function provides various options for interacting with the results of a search
 
         Parameters:
@@ -168,6 +161,7 @@ class Search:
         offset = 0
         print_options = True
 
+        # run a dummy shell with updated commands for as long as user is here
         while True:
             if print_options:
                 Search.print_item(lst, num_display, offset, item_type)
@@ -178,6 +172,7 @@ class Search:
 
             from Shell import Shell
             if cmd[0] in Shell.get_main_options():
+                # global commands
                 Shell.main_menu_do(
                     cmd[0], additional_options)
                 if (cmd[0] not in ['help', 'clear']):
@@ -197,12 +192,37 @@ class Search:
             elif cmd[0] == 'retweet' and item_type == 'tweet':
                 # Implement retweet functionality here
                 pass
-            elif cmd[0] == 'select' and item_type == 'user':
-                # Implement select user functionality here
-                pass
+                
+            # follow a selected user
             elif cmd[0] == 'follow' and item_type == 'user':
-                # Implement follow user functionality here
-                pass
+                try:
+                    index = int(cmd[1])
+                    # select user by the position of where they appear in a list
+                    if index > len(lst)+1 or index < 1:
+                        print("INVALID ID")
+                        continue
+                    usr = lst[index-1]['usr']
+                    Follow.follow(usr)
+                    print_options = False
+                except:
+                    print("INVALID ID")
+                    continue
+            # select a user to display their information
+            elif cmd[0] == 'select' and item_type == 'user':
+                print_options = False
+                try:
+                    index = int(cmd[1])
+                    # select user by the position of where they appear in a list
+                    if index > len(lst)+1 or index < 1:
+                        print("if - INVALID ID")
+                        continue
+                    usr = lst[index-1]['usr']
+                    Search.get_user_info(usr, lst[index-1]['name']) # displays user info
+                    Search.search_for_user_tweets(usr) # displays tweets of users
+                except:
+                    print("except - INVALID id")
+                    continue
+            # view info of a tweet
             elif cmd[0] == 'info' and item_type == 'tweet':
                 print_options = False
                 try:
@@ -227,6 +247,89 @@ class Search:
             else:
                 print("INVALID Command -_-")
                 continue
+
+    @staticmethod    
+    def get_user_info(usr: int, name:str) -> None:
+        """gets the number of tweets, the number of users being followed, and the number of followers
+
+        Args:
+            usr (int): the user id of selected user
+            name (str): the name of the selected user
+        """
+        tweets = Search.get_number_of_tweets(usr)
+        followers = Search.get_number_of_followers(usr)
+        followees = Search.get_number_of_following(usr)
+
+        # prints selected followers details
+        print(f"\nYou are looking at {name}'s profile.")
+        print(f"Tweet Count: {tweets}\t Followers: {followers} \t Following: {followees}")
+
+    @staticmethod
+    def get_number_of_tweets(usr:int) -> int:
+        """gets the number of tweets that selected followers has posted/retweeted
+
+        Args:
+            usr (int): the username of the selected follower
+
+        Returns:
+            int: number of tweets and retweets
+        """
+        assert Connection.is_connected()
+        # number of tweets
+        query = "SELECT COUNT(*) FROM tweets WHERE writer = ?"
+        Connection.cursor.execute(query, (usr,))
+        tweetResult = Connection.cursor.fetchone()
+
+        # number of retweets
+        query = "SELECT COUNT(*) FROM retweets WHERE usr = ?"
+        Connection.cursor.execute(query, (usr,))
+        retweetResult = Connection.cursor.fetchone()
+
+        if tweetResult == None:
+            tweetResult[0] = 0
+        if retweetResult == None:
+            retweetResult[0] = 0
+        return (tweetResult[0] + retweetResult[0])
+
+    @staticmethod
+    def get_number_of_followers(usr:int) -> int:
+        """returns the number of followers of the selected follower
+
+        Args:
+            usr (int): the selected follower
+
+        Returns:
+            int: number of followers
+        """
+        assert Connection.is_connected()
+        query = "SELECT COUNT(*) FROM follows WHERE flwee = ?"
+        Connection.cursor.execute(query, (usr,))
+        result = Connection.cursor.fetchone()
+        if result == None:
+            return 0
+        else:
+            return result[0]
+
+
+    @staticmethod
+    def get_number_of_following(usr:int) -> int:
+        
+        """returns the number of user following selected follower
+
+        Args:
+            usr (int): the username of the selected follower
+
+        Returns:
+            int: number of users following
+        """
+        assert Connection.is_connected()
+        query = "SELECT COUNT(*) FROM follows WHERE flwer = ?"
+        Connection.cursor.execute(query, (usr,))
+        result = Connection.cursor.fetchone()
+        if result == None:
+            return 0
+        else:
+            return result[0]
 
     @staticmethod
     def print_item(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
@@ -280,7 +383,9 @@ def AddTestData():
                     (10, 'password10', 'User10', 'user10@example.com', 'UserCity123', 10.0),
                     (11, 'password11', 'User100', 'user11@example.com', 'City', 11.0),
                     (12, 'password12', 'Sam', 'user12@example.com', 'SamCity', 12.0),
-                    (13, 'password13', 'Bam', 'user13@example.com', 'BamCity', 13.0);"""
+                    (13, 'password13', 'Bam', 'user13@example.com', 'BamCity', 13.0),
+                    (14, 'password13', 'Ram', 'ram@example.com', 'SamC', 13.0),
+                    (15, 'parshvaisacoolguy', 'Ham', 'user13@example.com', 'BamCity', 13.0);"""
     Connection.cursor.executescript(insert_query)
 
     insert_query = f"""INSERT INTO tweets (tid, writer, tdate, text, replyto) VALUES 
@@ -326,7 +431,7 @@ if __name__ == "__main__":
     AddTestData()
 
     Login.userID = 2
-    # Search.search_for_users()
-    Search.search_for_tweets()
+    Search.search_for_users()
+    # Search.search_for_tweets()
 
     Connection.close()

@@ -54,7 +54,7 @@ class Shell:
             elif cmd == "searchusers":
                 Search.search_for_users()
             elif cmd == "followers":
-                pass
+                Search.search_for_followers()
             elif cmd == "logout":
                 pass
             elif cmd == "help":
