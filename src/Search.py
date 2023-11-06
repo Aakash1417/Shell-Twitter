@@ -12,8 +12,10 @@ class Search:
         """This function prompts the user for keywords to search for and displays the results.
             It also provides various options for interacting with the results.
         """
-        keywords = input(
-            "Enter keywords to search for (separate multiple keywords with spaces): ").strip().split()
+        keywords = []
+        while len(keywords) ==0:
+            keywords = input(
+                "Enter keywords to search for (separate multiple keywords with spaces): ").strip().lower().split()
 
         conditions = []
         params = []
@@ -22,10 +24,10 @@ class Search:
             if keyword.startswith("#"):
                 tables.add("mentions m")
                 term = keyword[1:]
-                conditions.append("(m.term = ? AND m.tid = t.tid)")
+                conditions.append("(LOWER(m.term) = ? AND m.tid = t.tid)")
                 params.append(term)
             else:
-                conditions.append("t.text LIKE ?")
+                conditions.append("LOWER(t.text) LIKE ?")
                 params.append('%' + keyword + '%')
 
         table_clause = ", ".join(tables)
@@ -49,7 +51,7 @@ class Search:
             result_list.append(row_dict)
 
         Search.interact(result_list, 5, [
-            "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
+            "scrollup", "scrolldown", "viewinfo", "reply", "retweet"], 'tweet')
 
     @staticmethod
     def search_for_users() -> None:
@@ -95,9 +97,9 @@ class Search:
                         "scrollup", "scrolldown", "select"], 'user')
 
     @staticmethod
-    def interact(lst: [{}], num_display: int, additional_options: [str], item_type: int) -> None:
+    def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
         """This function provides various options for interacting with the results of a search
-
+        
         Parameters:
             lst (list of dictionaries): A list of tweet objects
             num_display (int): The number of tweets to display per page
@@ -112,45 +114,51 @@ class Search:
                 Search.print_item(lst, num_display, offset, item_type)
 
             cmd = input(">>> ").strip().lower().split()
-
+            if len(cmd)<1:
+                print("INVALID Command -_-")
+                continue
             print_options = True
 
             from Shell import Shell
             if cmd[0] in Shell.get_main_options():
                 Shell.main_menu_do(
                     cmd[0], additional_options)
-                if (cmd[0] not in ['help', 'clear']):
+                if (cmd[0] != 'help'):
                     return
                 else:
                     print_options = False
                     continue
-            elif cmd[0] == 'scrolldown':
+            elif cmd[0] == 'scrolldown' and len(cmd)==1:
                 if offset + num_display < len(lst):
                     offset += num_display
-            elif cmd[0] == 'scrollup':
+            elif cmd[0] == 'scrollup' and len(cmd)==1:
                 offset = max(offset - num_display, 0)
-
-            elif cmd[0] == 'reply' and item_type == 'tweet':
-                # Implement reply functionality here
-                pass
-            elif cmd[0] == 'retweet' and item_type == 'tweet':
-                # Implement retweet functionality here
-                pass
-            elif cmd[0] == 'select' and item_type == 'tweet':
+            elif cmd[0] == 'reply' and item_type == 'tweet'and len(cmd)==2:
                 print_options = False
-                try:
-                    index = int(cmd[1])
-                    if index > len(lst)+1 or index < 1:
-                        print("INVALID id")
-                        continue
-                    tid = lst[index-1]['tid']
-                except:
+                tid = Search.listnum_to_tid(lst, cmd[1])
+                if not tid:
                     print("INVALID id")
                     continue
+                from ComposeTweet import ComposeTweet
+                ComposeTweet.createTweet(tid)
+            elif cmd[0] == 'retweet' and item_type == 'tweet' and len(cmd)==2:
+                print_options = False
+                tid = Search.listnum_to_tid(lst, cmd[1])
+                if not tid:
+                    print("INVALID id")
+                    continue
+                from ComposeTweet import ComposeTweet
+                ComposeTweet.createRetweet(tid)
+            elif cmd[0] == 'viewinfo' and item_type == 'tweet' and len(cmd)==2:
+                print_options = False
+                tid = Search.listnum_to_tid(lst, cmd[1])
+                if not tid:
+                    print("INVALID id")
+                    continue
+                
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
                 retweets_count = Connection.cursor.fetchone()[0]
-
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM tweets WHERE replyto = ?", (tid,))
                 replies_count = Connection.cursor.fetchone()[0]
@@ -162,7 +170,17 @@ class Search:
                 continue
 
     @staticmethod
-    def print_item(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
+    def listnum_to_tid(lst, option_id)->int :
+        try:
+            index = int(option_id)
+            if index > len(lst)+1 or index < 1:
+                return 0
+            return int(lst[index-1]['tid'])
+        except:
+            return 0
+
+    @staticmethod
+    def print_item(lst: [dict], num_display: int, offset: int, item_type: str) -> None:
         """This function prints a list of tweets or users
 
         Parameters:
@@ -172,11 +190,11 @@ class Search:
             item_type (string): The type of item being displayed (tweet or user)
         """
         if len(lst) == 0:
-            print("No results found")
+            print("No results found!")
             print()
             return
 
-        print("="*32)
+        print("="*80)
         if item_type == 'tweet':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
@@ -185,7 +203,7 @@ class Search:
                 print()
                 print(f"\t{item['tdate']}")
                 print()
-                print("="*32)
+                print("="*80)
         elif item_type == 'user':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
@@ -193,7 +211,7 @@ class Search:
                 print(f"\t{item['name']}")
                 print(f"\t{item['city']}")
                 print()
-                print("="*32)
+                print("="*80)
         print(
             f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(lst)/num_display),1)}")
         print()
