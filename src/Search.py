@@ -135,7 +135,7 @@ class Search:
 
 
     @staticmethod
-    def parse_results(query_results: list[tuple], column_names: list[str], num_display: int, additional_options: list[str], item_type: str) -> None:
+    def parse_results(query_results: [tuple], column_names: [str], num_display: int, additional_options: [str], item_type: str) -> None:
         """Parses query results (a list of tuples ie. rows),
             converting to a list of dictionaries (keys are column names)
             and passes it to interact()
@@ -156,7 +156,7 @@ class Search:
 
 
     @staticmethod
-    def interact(lst: list[dict], num_display: int, additional_options: list[str], item_type: str) -> None:
+    def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
         """Provides options for interacting with the results of a search via a phony shell
 
         Args:
@@ -175,7 +175,7 @@ class Search:
 
             cmd = input(">>> ").strip().lower().split()
             if len(cmd) < 1:
-                print("INVALID Command -_-")
+                print("INVALID COMMAND -_-")
                 continue
             print_options = True
 
@@ -259,7 +259,7 @@ class Search:
                 print(
                     f"Tweet [{cmd[1]}] has {retweets_count} retweets and {replies_count} replies")
             else:
-                print("INVALID Command -_-")
+                print("INVALID COMMAND -_-")
                 continue
 
     @staticmethod    
@@ -341,7 +341,7 @@ class Search:
 
 
     @staticmethod
-    def listnum_to_tid(lst: list[dict], option_id: str) -> int:
+    def listnum_to_tid(lst: [dict], option_id: str) -> int:
         """Converts an index in a list of tweets to the tid of the selected tweet
 
         Args:
@@ -361,7 +361,7 @@ class Search:
 
 
     @staticmethod
-    def print_items(lst: list[dict], num_display: int, offset: int, item_type: str) -> None:
+    def print_items(lst: [dict], num_display: int, offset: int, item_type: str) -> None:
         """Prints a list of tweets or users
 
         Args:

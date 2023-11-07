@@ -191,6 +191,6 @@ if __name__ == "__main__":
         elif (inputs[0] == "exit"):
             break
         else:
-            print("Invalid command.")
+            print("INVALID COMMAND -_-")
 
         Connection.close()

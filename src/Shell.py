@@ -17,7 +17,7 @@ class Shell:
 
 
     @staticmethod
-    def get_main_options() -> list[str]:
+    def get_main_options() -> [str]:
         """Gets a list of the keywords globally available at all times
 
         Returns:
@@ -41,7 +41,7 @@ class Shell:
 
 
     @staticmethod
-    def main_menu_do(cmd: str, additional_options: list[str] = []) -> None:
+    def main_menu_do(cmd: str, additional_options: [str] = []) -> None:
         """Central controller that executes actions based on the command provided.
             Routes actions such as login, registration, displaying feed, searching, etc.
 
@@ -78,11 +78,11 @@ class Shell:
             elif cmd == "clear":
                 Shell.clear()
         else:
-            print("INVALID Command -_-")
+            print("INVALID COMMAND -_-")
 
 
     @staticmethod
-    def print_menu(additional_options: list[str] = []) -> None:
+    def print_menu(additional_options: [str] = []) -> None:
         """Prints the help menu of all the currently-available keywords
 
         Args:
