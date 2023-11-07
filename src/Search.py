@@ -1,9 +1,7 @@
-from Connection import Connection
-import os
 import math
+from Connection import Connection
 from Setup import Setup
 from Login import Login
-from Test import Test
 from Follow import Follow
 
 
@@ -51,7 +49,7 @@ class Search:
                         for description in Connection.cursor.description]
 
         Search.parse_results(results, column_names, 5, [
-            "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
+            "scrollup", "scrolldown", "viewinfo", "reply", "retweet"], 'tweet')
 
     @staticmethod
     def search_for_user_tweets(usr:int) -> None:
@@ -435,6 +433,7 @@ def AddTestData():
 
 
 if __name__ == "__main__":
+    import os
     path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
     Connection.connect(path)
 
