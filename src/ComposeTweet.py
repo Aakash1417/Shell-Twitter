@@ -21,7 +21,7 @@ class ComposeTweet:
         Connection.cursor.execute(query)
         entry = Connection.cursor.fetchone()
 
-        if entry == None:
+        if entry[0] is None:
             return 0
         else:
             return entry[0]

@@ -1,4 +1,5 @@
 import os
+import sys
 from Connection import Connection
 from Setup import Setup
 from Shell import Shell
@@ -6,16 +7,33 @@ from Test import Test
 
 
 def main():
-    Shell.clear()
-    path = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
-    Connection.connect(path)
+    """Main method. Invoked when the central program is run."""
+    # connect to the database
+    argc = len(sys.argv)
+    if "--db-path" in sys.argv:
+        if sys.argv.index("--db-path") == argc-1:
+            print("Invalid command-line arguments!")
+            exit(1)
+        dbPath = sys.argv[sys.argv.index("--db-path") + 1]
+    else:
+        dbPath = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
+    Connection.connect(dbPath)
 
-    # Setup/dev methods
-    Setup.drop_tables()
+    # provide an option to drop all tables (fresh start)
+    if "--reset" in sys.argv:
+        Setup.drop_tables()
+
+    # define the tables in case they haven't been
+    # (does nothing if the tables already exist/have been provided)
     Setup.define_tables()
-    Test.insert_test_data()
 
-    print("Welcome to crystal methadata!")
+    # insert mock data for testing
+    if "--test-mode" in sys.argv:
+        Test.insert_test_data()
+
+    # welcome message, present infinite shell
+    Shell.clear()
+    print("Welcome to Shell Twitter!")
     Shell.print_menu()
     while True:
         cmd = input(">>> ").strip().lower()

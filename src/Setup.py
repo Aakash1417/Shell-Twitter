@@ -25,7 +25,7 @@ class Setup:
         assert Connection.is_connected()
 
         defineQuery = """
-        CREATE TABLE users (
+        CREATE TABLE IF NOT EXISTS users (
             usr         INT,
             pwd         TEXT,
             name        TEXT,
@@ -34,7 +34,7 @@ class Setup:
             timezone    FLOAT,
             PRIMARY KEY (usr)
         );
-        CREATE TABLE follows (
+        CREATE TABLE IF NOT EXISTS follows (
             flwer       INT,
             flwee       INT,
             start_date  DATE,
@@ -42,7 +42,7 @@ class Setup:
             FOREIGN KEY (flwer) REFERENCES users,
             FOREIGN KEY (flwee) REFERENCES users
         );
-        CREATE TABLE tweets (
+        CREATE TABLE IF NOT EXISTS tweets (
             tid         INT,
             writer      INT,
             tdate       DATE,
@@ -52,18 +52,18 @@ class Setup:
             FOREIGN KEY (writer) REFERENCES users,
             FOREIGN KEY (replyto) REFERENCES tweets
         );
-        CREATE TABLE hashtags (
+        CREATE TABLE IF NOT EXISTS hashtags (
             term        TEXT,
             PRIMARY KEY (term)
         );
-        CREATE TABLE mentions (
+        CREATE TABLE IF NOT EXISTS mentions (
             tid         INT,
             term        TEXT,
             PRIMARY KEY (tid, term),
             FOREIGN KEY (tid) REFERENCES tweets,
             FOREIGN KEY (term) REFERENCES hashtags
         );
-        CREATE TABLE retweets (
+        CREATE TABLE IF NOT EXISTS retweets (
             usr         INT,
             tid         INT,
             rdate       DATE,
@@ -71,13 +71,13 @@ class Setup:
             FOREIGN KEY (usr) REFERENCES users,
             FOREIGN KEY (tid) REFERENCES tweets
         );
-        CREATE TABLE lists (
+        CREATE TABLE IF NOT EXISTS lists (
             lname       TEXT,
             owner       INT,
             PRIMARY KEY (lname),
             FOREIGN KEY (owner) REFERENCES users
         );
-        CREATE TABLE includes (
+        CREATE TABLE IF NOT EXISTS includes (
             lname       TEXT,
             member      INT,
             PRIMARY KEY (lname, member),

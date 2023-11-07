@@ -16,7 +16,7 @@ class Login:
         assert Connection.is_connected()
         Connection.cursor.execute("SELECT MAX(usr) FROM users;")
         result = Connection.cursor.fetchone()
-        if result is None:
+        if result[0] is None:
             return 0
         return int(result[0])
 
