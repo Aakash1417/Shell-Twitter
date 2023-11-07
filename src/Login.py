@@ -142,6 +142,7 @@ class Login:
             Login.userID = uid
             return True
 
+
     def logout() -> None:
         """Logs out any currently logged in user"""
         assert Connection.is_connected()

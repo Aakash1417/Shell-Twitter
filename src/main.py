@@ -37,7 +37,8 @@ def main():
     # welcome message, present infinite shell
     Shell.clear()
     print("Welcome to Shell Twitter!")
-    Shell.print_menu()
+    print("Type 'help' at any shell prompt (>>>) to see a list of available commands")
+    print()
     while True:
         cmd = input(">>> ").strip().lower()
         Shell.main_menu_do(cmd)
