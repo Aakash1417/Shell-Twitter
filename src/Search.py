@@ -13,8 +13,13 @@ class Search:
         """This function prompts the user for keywords to search for and displays the results.
             It also provides various options for interacting with the results.
         """
-        keywords = input(
-            "Enter keywords to search for (separate multiple keywords with spaces): ").strip().split()
+        while True:
+            keywords = input(
+                "Enter keywords to search for (separate multiple keywords with spaces): ").strip().lower().split()
+            if len(keywords) == 0:
+                print("Please enter at least one keyword.")
+            else:
+                break
 
         conditions = []
         params = []
@@ -23,17 +28,17 @@ class Search:
             if keyword.startswith("#"):
                 tables.add("mentions m")
                 term = keyword[1:]
-                conditions.append("(m.term = ? AND m.tid = t.tid)")
+                conditions.append("(LOWER(m.term) = ? AND m.tid = t.tid)")
                 params.append(term)
             else:
-                conditions.append("t.text LIKE ?")
+                conditions.append("LOWER(t.text) LIKE ?")
                 params.append('%' + keyword + '%')
 
         table_clause = ", ".join(tables)
         where_clause = " OR ".join(conditions)
 
         query = f"""
-            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text
+            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, NULL as retweeter
             FROM {table_clause}
             WHERE ({where_clause})
             AND u.usr = t.writer
@@ -56,7 +61,7 @@ class Search:
             usr (int): the user id of the selected user
         """
         query = f"""
-            SELECT u.name, t.tid, t.writer, t.tdate, t.text
+            SELECT u.name, t.tid, t.writer, t.tdate, t.text, NULL as retweeter
             FROM users u, tweets t
             WHERE u.usr = t.writer
             AND t.writer = ?
@@ -67,9 +72,8 @@ class Search:
 
         column_names = [description[0]
                         for description in Connection.cursor.description]
-        
         Search.parse_results(results, column_names, 3, [
-            "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')   
+            "scrollup", "scrolldown", "viewinfo", "reply", "retweet"], 'tweet')   
     
     @staticmethod
     def search_for_users() -> None:
@@ -80,7 +84,7 @@ class Search:
         while True:
             # ensure that only one keyword is entered
             keyword =  input("Enter a keyword to search users for:").strip().split()
-            if len(keyword) > 1:
+            if len(keyword) != 1:
                 print("Please enter only one (1) keyword")
             else:
                 break
@@ -107,7 +111,7 @@ class Search:
 
         column_names = [description[0]
                         for description in Connection.cursor.description]
-        
+
         Search.parse_results(results, column_names, 5,
                             ["scrollup", "scrolldown", "select", "follow"], 'user')
 
@@ -120,11 +124,12 @@ class Search:
         query = "SELECT DISTINCT usr, name, city FROM follows, users WHERE flwee = ? AND flwer = usr ORDER BY start_date DESC"
         Connection.cursor.execute(query, (Login.userID,))
         results = Connection.cursor.fetchall()
-        
+
         column_names = [description[0]
-            for description in Connection.cursor.description]
-        
-        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select", "follow"], 'user')
+                        for description in Connection.cursor.description]
+
+        Search.parse_results(results, column_names, len(results), [
+                             "scrollup", "scrolldown", "select", "follow"], 'user')
 
     @staticmethod
     def parse_results(query_results: [tuple], column_names: [str], num_display: int, additional_options: [str], item_type: str) -> None:
@@ -141,8 +146,8 @@ class Search:
         for row in query_results:
             row_dict = dict(zip(column_names, row))
             result_list.append(row_dict)
-
-        Search.interact(result_list, num_display, additional_options, item_type)
+        Search.interact(result_list, num_display,
+                        additional_options, item_type)
 
     @staticmethod
     def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
@@ -163,7 +168,9 @@ class Search:
                 Search.print_items(lst, num_display, offset, item_type)
 
             cmd = input(">>> ").strip().lower().split()
-
+            if len(cmd) < 1:
+                print("INVALID Command -_-")
+                continue
             print_options = True
 
             from Shell import Shell
@@ -176,19 +183,11 @@ class Search:
                 else:
                     print_options = False
                     continue
-            elif cmd[0] == 'scrolldown':
+            elif cmd[0] == 'scrolldown' and len(cmd) == 1:
                 if offset + num_display < len(lst):
                     offset += num_display
-            elif cmd[0] == 'scrollup':
+            elif cmd[0] == 'scrollup' and len(cmd) == 1:
                 offset = max(offset - num_display, 0)
-
-            elif cmd[0] == 'reply' and item_type == 'tweet':
-                # Implement reply functionality here
-                pass
-            elif cmd[0] == 'retweet' and item_type == 'tweet':
-                # Implement retweet functionality here
-                pass
-                
             # follow a selected user
             elif cmd[0] == 'follow' and item_type == 'user':
                 try:
@@ -215,31 +214,42 @@ class Search:
                     usr = lst[index-1]['usr']
                     Search.get_user_info(usr, lst[index-1]['name']) # displays user info
                     Search.search_for_user_tweets(usr) # displays tweets of users
+                    return
                 except:
                     print("except - INVALID id")
                     continue
-            # view info of a tweet
-            elif cmd[0] == 'info' and item_type == 'tweet':
+            elif cmd[0] == 'reply' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
-                try:
-                    index = int(cmd[1])
-                    if index > len(lst)+1 or index < 1:
-                        print("INVALID id")
-                        continue
-                    tid = lst[index-1]['tid']
-                except:
+                tid = Search.listnum_to_tid(lst, cmd[1])
+                if not tid:
+                    print("INVALID id")
+                    continue
+                from ComposeTweet import ComposeTweet
+                ComposeTweet.createTweet(tid)
+            elif cmd[0] == 'retweet' and item_type == 'tweet' and len(cmd) == 2:
+                print_options = False
+                tid = Search.listnum_to_tid(lst, cmd[1])
+                if not tid:
+                    print("INVALID id")
+                    continue
+                from ComposeTweet import ComposeTweet
+                ComposeTweet.createRetweet(tid)
+                # view info of a tweet
+            elif cmd[0] == 'viewinfo' and item_type == 'tweet' and len(cmd) == 2:
+                print_options = False
+                tid = Search.listnum_to_tid(lst, cmd[1])
+                if not tid:
                     print("INVALID id")
                     continue
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
                 retweets_count = Connection.cursor.fetchone()[0]
-
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM tweets WHERE replyto = ?", (tid,))
                 replies_count = Connection.cursor.fetchone()[0]
 
                 print(
-                    f"Tweet +{tid} has {retweets_count} retweets and {replies_count} replies")
+                    f"Tweet [{cmd[1]}] has {retweets_count} retweets and {replies_count} replies")
             else:
                 print("INVALID Command -_-")
                 continue
@@ -276,16 +286,9 @@ class Search:
         Connection.cursor.execute(query, (usr,))
         tweetResult = Connection.cursor.fetchone()
 
-        # number of retweets
-        query = "SELECT COUNT(*) FROM retweets WHERE usr = ?"
-        Connection.cursor.execute(query, (usr,))
-        retweetResult = Connection.cursor.fetchone()
-
         if tweetResult == None:
             tweetResult[0] = 0
-        if retweetResult == None:
-            retweetResult[0] = 0
-        return (tweetResult[0] + retweetResult[0])
+        return tweetResult[0]
 
     @staticmethod
     def get_number_of_followers(usr:int) -> int:
@@ -328,7 +331,17 @@ class Search:
             return result[0]
 
     @staticmethod
-    def print_items(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
+    def listnum_to_tid(lst, option_id) -> int:
+        try:
+            index = int(option_id)
+            if index > len(lst)+1 or index < 1:
+                return 0
+            return int(lst[index-1]['tid'])
+        except:
+            return 0
+
+    @staticmethod
+    def print_items(lst: [dict], num_display: int, offset: int, item_type: str) -> None:
         """This function prints a list of tweets or users
 
         Parameters:
@@ -338,11 +351,11 @@ class Search:
             item_type (string): The type of item being displayed (tweet or user)
         """
         if len(lst) == 0:
-            print("No results found")
+            print("No results found!")
             print()
             return
 
-        print("="*32)
+        print("="*80)
         if item_type == 'tweet':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
@@ -355,7 +368,7 @@ class Search:
                     print("", end="\t")
                 print(f"{item['tdate']}")
                 print()
-                print("="*32)
+                print("="*80)
         elif item_type == 'user':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
@@ -363,7 +376,7 @@ class Search:
                 print(f"\t{item['name']}")
                 print(f"\t{item['city']}")
                 print()
-                print("="*32)
+                print("="*80)
         print(
             f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(lst)/num_display),1)}")
         print()
