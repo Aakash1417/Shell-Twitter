@@ -221,7 +221,7 @@ class Search:
             elif cmd[0] == 'reply' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
-                if not tid:
+                if tid is None:
                     print("INVALID ID")
                     continue
                 from ComposeTweet import ComposeTweet
@@ -229,7 +229,7 @@ class Search:
             elif cmd[0] == 'retweet' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
-                if not tid:
+                if tid is None:
                     print("INVALID ID")
                     continue
                 from ComposeTweet import ComposeTweet
@@ -238,7 +238,7 @@ class Search:
             elif cmd[0] == 'viewinfo' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
-                if not tid:
+                if tid is None:
                     print("INVALID ID")
                     continue
                 Connection.cursor.execute(
