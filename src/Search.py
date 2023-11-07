@@ -13,7 +13,7 @@ class Search:
             It also provides various options for interacting with the results.
         """
         keywords = []
-        while len(keywords) ==0:
+        while len(keywords) == 0:
             keywords = input(
                 "Enter keywords to search for (separate multiple keywords with spaces): ").strip().lower().split()
 
@@ -99,7 +99,7 @@ class Search:
     @staticmethod
     def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
         """This function provides various options for interacting with the results of a search
-        
+
         Parameters:
             lst (list of dictionaries): A list of tweet objects
             num_display (int): The number of tweets to display per page
@@ -114,7 +114,7 @@ class Search:
                 Search.print_item(lst, num_display, offset, item_type)
 
             cmd = input(">>> ").strip().lower().split()
-            if len(cmd)<1:
+            if len(cmd) < 1:
                 print("INVALID Command -_-")
                 continue
             print_options = True
@@ -128,12 +128,12 @@ class Search:
                 else:
                     print_options = False
                     continue
-            elif cmd[0] == 'scrolldown' and len(cmd)==1:
+            elif cmd[0] == 'scrolldown' and len(cmd) == 1:
                 if offset + num_display < len(lst):
                     offset += num_display
-            elif cmd[0] == 'scrollup' and len(cmd)==1:
+            elif cmd[0] == 'scrollup' and len(cmd) == 1:
                 offset = max(offset - num_display, 0)
-            elif cmd[0] == 'reply' and item_type == 'tweet'and len(cmd)==2:
+            elif cmd[0] == 'reply' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if not tid:
@@ -141,7 +141,7 @@ class Search:
                     continue
                 from ComposeTweet import ComposeTweet
                 ComposeTweet.createTweet(tid)
-            elif cmd[0] == 'retweet' and item_type == 'tweet' and len(cmd)==2:
+            elif cmd[0] == 'retweet' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if not tid:
@@ -149,13 +149,13 @@ class Search:
                     continue
                 from ComposeTweet import ComposeTweet
                 ComposeTweet.createRetweet(tid)
-            elif cmd[0] == 'viewinfo' and item_type == 'tweet' and len(cmd)==2:
+            elif cmd[0] == 'viewinfo' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if not tid:
                     print("INVALID id")
                     continue
-                
+
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
                 retweets_count = Connection.cursor.fetchone()[0]
@@ -170,7 +170,7 @@ class Search:
                 continue
 
     @staticmethod
-    def listnum_to_tid(lst, option_id)->int :
+    def listnum_to_tid(lst, option_id) -> int:
         try:
             index = int(option_id)
             if index > len(lst)+1 or index < 1:
