@@ -19,6 +19,7 @@ class Follow():
             Connection.cursor.execute("INSERT INTO follows VALUES(?,?,?)",
                                       (Login.userID, flwee, datetime.date.today()))
             print("You started following " + Follow.getName(flwee))
+            Connection.connection.commit()
         print()
 
 
