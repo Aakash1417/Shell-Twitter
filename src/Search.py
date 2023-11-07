@@ -44,12 +44,8 @@ class Search:
 
         column_names = [description[0]
                         for description in Connection.cursor.description]
-        result_list = []
-        for row in results:
-            row_dict = dict(zip(column_names, row))
-            result_list.append(row_dict)
 
-        Search.interact(result_list, 5, [
+        Search.parse_results(results, column_names, 5, [
             "scrollup", "scrolldown", "select", "reply", "retweet"], 'tweet')
 
     @staticmethod
@@ -128,10 +124,10 @@ class Search:
         column_names = [description[0]
             for description in Connection.cursor.description]
         
-        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select", "fol"], 'user')
+        Search.parse_results(results, column_names, len(results), ["scrollup", "scrolldown", "select", "follow"], 'user')
 
     @staticmethod
-    def parse_results(query_results: [tuple], column_names:[str], num_display: int, additional_options:[str], item_type:str) -> None:
+    def parse_results(query_results: [tuple], column_names: [str], num_display: int, additional_options: [str], item_type: str) -> None:
         """parses results of query to be passed in interact 
 
         Args:
@@ -164,7 +160,7 @@ class Search:
         # run a dummy shell with updated commands for as long as user is here
         while True:
             if print_options:
-                Search.print_item(lst, num_display, offset, item_type)
+                Search.print_items(lst, num_display, offset, item_type)
 
             cmd = input(">>> ").strip().lower().split()
 
@@ -175,7 +171,7 @@ class Search:
                 # global commands
                 Shell.main_menu_do(
                     cmd[0], additional_options)
-                if (cmd[0] not in ['help', 'clear']):
+                if (cmd[0] != "help"):
                     return
                 else:
                     print_options = False
@@ -332,7 +328,7 @@ class Search:
             return result[0]
 
     @staticmethod
-    def print_item(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
+    def print_items(lst: [{}], num_display: int, offset: int, item_type: int) -> None:
         """This function prints a list of tweets or users
 
         Parameters:
@@ -353,7 +349,11 @@ class Search:
                 print(f"\t{item['name']} (+{item['writer']})")
                 print(f"\t{item['text']}")
                 print()
-                print(f"\t{item['tdate']}")
+                if item['retweeter'] is not None:
+                    print(f"\tRetweeted by {item['retweeter']} on", end=" ")
+                else:
+                    print("", end="\t")
+                print(f"{item['tdate']}")
                 print()
                 print("="*32)
         elif item_type == 'user':

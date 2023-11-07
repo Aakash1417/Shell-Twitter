@@ -4,6 +4,7 @@ from Connection import Connection
 
 class Login:
     userID = None
+    name = None
 
     @staticmethod
     def get_highest_uid() -> int:
@@ -77,7 +78,9 @@ class Login:
             return False
         else:
             # authentication successful
-            print(f"Welcome back, {result[1]}.\n")
+            Login.name = result[1]
+            print(f"Welcome back, {Login.name}.")
+            print("Here is your feed:\n")
             return True
 
 
@@ -138,3 +141,11 @@ class Login:
             print(f"Your new user ID is {uid}. You will need this ID later to log in.\n")
             Login.userID = uid
             return True
+
+    def logout() -> None:
+        """Logs out any currently logged in user"""
+        assert Connection.is_connected()
+        assert Login.userID is not None
+        print(f"{Login.name}, you have now logged out.\n")
+        Login.userID = None
+        Login.name = None
