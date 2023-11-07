@@ -36,7 +36,7 @@ class Search:
         where_clause = " OR ".join(conditions)
 
         query = f"""
-            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, NULL as retweeter
+            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, t.replyto, NULL as retweeter
             FROM {table_clause}
             WHERE ({where_clause})
             AND u.usr = t.writer
@@ -59,7 +59,7 @@ class Search:
             usr (int): the user id of the selected user
         """
         query = f"""
-            SELECT u.name, t.tid, t.writer, t.tdate, t.text, NULL as retweeter
+            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, t.replyto, NULL as retweeter
             FROM users u, tweets t
             WHERE u.usr = t.writer
             AND t.writer = ?
@@ -348,6 +348,7 @@ class Search:
             offset (int): The number of tweets to skip
             item_type (string): The type of item being displayed (tweet or user)
         """
+        assert Connection.is_connected()
         if len(lst) == 0:
             print("No results found!")
             print()
@@ -357,16 +358,41 @@ class Search:
         if item_type == 'tweet':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
+
+                if item['replyto'] is not None:
+                    # need to get the usr who wrote the parent
+                    parentQuery = """
+                            SELECT name, writer, text
+                            FROM users u, tweets t
+                            WHERE u.usr = t.writer
+                                AND t.tid = ?"""
+                    Connection.cursor.execute(parentQuery, (item['replyto'],))
+                    parentResult = Connection.cursor.fetchone()
+                    if parentResult[0] is not None:
+                        print(f"\t[Replying to {parentResult[0]} (+{parentResult[1]})]")
+                        print(f"\t >> {parentResult[2]}")
+                        print()
+
                 print(f"\t{item['name']} (+{item['writer']})")
                 print(f"\t{item['text']}")
                 print()
+
                 if item['retweeter'] is not None:
-                    print(f"\tRetweeted by {item['retweeter']} on", end=" ")
+                    # need to get the name of the retweeter
+                    rtQuery = """
+                            SELECT name, usr
+                            FROM users
+                            WHERE usr = ?"""
+                    Connection.cursor.execute(rtQuery, (item['retweeter'],))
+                    rtResult = Connection.cursor.fetchone()
+                    if rtResult[0] is not None:
+                        print(f"\tRetweeted by {rtResult[0]} (+{rtResult[1]}) on", end=" ")
                 else:
                     print("", end="\t")
                 print(f"{item['tdate']}")
                 print()
                 print("="*80)
+
         elif item_type == 'user':
             for idx, item in enumerate(lst[offset:offset + num_display]):
                 print(f"{idx+offset+1}]")
@@ -375,6 +401,7 @@ class Search:
                 print(f"\t{item['city']}")
                 print()
                 print("="*80)
+
         print(
             f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(lst)/num_display),1)}")
         print()

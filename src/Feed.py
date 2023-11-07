@@ -10,17 +10,16 @@ class Feed:
         assert Connection.is_connected()
         assert Login.userID is not None
         feedQuery = """
-            SELECT name, tid, writer, tdate, text, NULL as retweeter
+            SELECT name, tid, writer, tdate, text, replyto, NULL as retweeter
             FROM users u, tweets t, follows f
             WHERE u.usr = t.writer
                 AND t.writer = f.flwee
                 AND f.flwer = ?
             UNION
-            SELECT u.name, rt.tid, t.writer, rt.rdate, t.text, u2.name
-            FROM users u, users u2, retweets rt, tweets t, follows f
+            SELECT u.name, rt.tid, t.writer, rt.rdate, t.text, t.replyto, rt.usr
+            FROM users u, retweets rt, tweets t, follows f
             WHERE u.usr = t.writer
                 AND t.tid = rt.tid
-                AND u2.usr = rt.usr
                 AND rt.usr = f.flwee
                 AND f.flwer = ?
             ORDER BY t.tdate DESC"""
