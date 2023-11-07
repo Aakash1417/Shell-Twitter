@@ -1,3 +1,6 @@
+#!/bin/python3
+# main.py
+
 import os
 import sys
 from Connection import Connection
@@ -20,7 +23,7 @@ def main():
     Connection.connect(dbPath)
 
     # provide an option to drop all tables (fresh start)
-    if "--reset" in sys.argv:
+    if "--reset" in sys.argv or "--test-mode" in sys.argv:
         Setup.drop_tables()
 
     # define the tables in case they haven't been

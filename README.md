@@ -9,11 +9,18 @@ Group member names and ccids (3-4 members)
 ## Running instructions
 ```bash
 # Linux/Mac
-$ python3 src/main.py
+$ python3 src/main.py [--db-path path-to-db] [--reset] [--test-mode]
+  # OR
+$ src/main.py [--db-path path-to-db] [--reset] [--test-mode]
 
 # Windows
-$ py src/main.py
+$ py src/main.py [--db-path path-to-db] [--reset] [--test-mode]
 ```
+
+Command-line arguments:
+  - `--db-path path-to-file` : filepath of the selected SQL database. src/data.db if unspecified.
+  - `--reset` : drop all tables in the database, useful for providing a clean slate.
+  - `--test-mode` : insert mock data into the database after wiping it (implicitly calling --reset too)
 
 ## Names of anyone you have collaborated with (as much as it is allowed within the course policy) or a line saying that you did not collaborate with anyone else.  
 We did not collaborate with anyone else.
