@@ -5,54 +5,36 @@ import datetime
 
 class Follow():
     @staticmethod
-    def follow(flwer: int):
-        """user logined in wants to follow the specified user id
+    def follow(flwee: int) -> None:
+        """Records the currently logged-in user following someone else
 
         Args:
-            flwer (int): the followers id
+            flwee (int): the user id of the user to follow
         """
         assert Connection.is_connected()
         query = "SELECT flwer FROM follows, users WHERE flwer = ? AND flwee = ?"
-        if (Follow.contains(query, (Login.userID, flwer))):  # already follows the user
-            print("You already follow " + Follow.getName(flwer))
+        if (Connection.contains(query, (Login.userID, flwee))):  # already follows the user
+            print("You already follow " + Follow.getName(flwee))
         else:
             Connection.cursor.execute("INSERT INTO follows VALUES(?,?,?)",
-                                      (Login.userID, flwer, datetime.date.today()))
-            print("You started following " + Follow.getName(flwer))
+                                      (Login.userID, flwee, datetime.date.today()))
+            print("You started following " + Follow.getName(flwee))
+            Connection.connection.commit()
+        print()
+
 
     @staticmethod
-    def contains(query: str, values: tuple) -> bool:
-        """will find if table contains values
+    def getName(usr: int) -> str:
+        """Gets the name of a given user
 
         Args:
-            query (str): given query
-            values (tuple): values to look for in query
-
-        Returns:
-            bool: whether it contains an item with values given
-        """
-        assert Connection.is_connected()
-        Connection.cursor.execute(query, values)
-        result = Connection.cursor.fetchone()
-
-        if result == None:
-            return False
-        else:
-            return True
-
-    @staticmethod
-    def getName(flwer: int) -> str:
-        """gets the name of the user being followed
-
-        Args:
-            flwer (int): the follower to get the name of
+            usr (int): the user id of the chosen user
 
         Returns:
             str: the name of the user
         """
         assert Connection.is_connected()
         Connection.cursor.execute("SELECT name FROM users WHERE usr = ?",
-                                  (flwer, ))
+                                  (usr, ))
         result = Connection.cursor.fetchone()
-        Connection.connection.commit()
         return result[0]

@@ -16,7 +16,7 @@ def main():
     if "--db-path" in sys.argv:
         if sys.argv.index("--db-path") == argc-1:
             print("Invalid command-line arguments!")
-            exit(1)
+            os._exit(1)
         dbPath = sys.argv[sys.argv.index("--db-path") + 1]
     else:
         dbPath = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
@@ -37,7 +37,8 @@ def main():
     # welcome message, present infinite shell
     Shell.clear()
     print("Welcome to Shell Twitter!")
-    Shell.print_menu()
+    print("Type 'help' at any shell prompt (>>>) to see a list of available commands")
+    print()
     while True:
         cmd = input(">>> ").strip().lower()
         Shell.main_menu_do(cmd)

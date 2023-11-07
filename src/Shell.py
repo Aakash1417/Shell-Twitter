@@ -9,16 +9,20 @@ from ComposeTweet import ComposeTweet
 class Shell:
     @staticmethod
     def clear():
-        """
-            Clears the screen
-        """
+        """Clears the screen"""
         if os.name == 'posix':
             os.system('clear')
         elif os.name == 'nt':
             os.system('cls')
 
+
     @staticmethod
-    def get_main_options():
+    def get_main_options() -> [str]:
+        """Gets a list of the keywords globally available at all times
+
+        Returns:
+            list[str]: list of global keywords
+        """
         options = []
         if Login.userID is None:
             options.append("login")
@@ -35,13 +39,16 @@ class Shell:
         options.append("exit")
         return options
 
-    @staticmethod
-    def main_menu_do(cmd, additional_options=[]):
-        """
-            Presents a main menu with various options based on the user's login status
 
-            Returns:
-                A list of available menu options
+    @staticmethod
+    def main_menu_do(cmd: str, additional_options: [str] = []) -> None:
+        """Central controller that executes actions based on the command provided.
+            Routes actions such as login, registration, displaying feed, searching, etc.
+
+        Args:
+            cmd (str): the global command to execute.
+            additional_options (list[str], optional): Additional context-dependent
+                keywords to print in help text. Defaults to [].
         """
         options = Shell.get_main_options()
         if cmd in options:
@@ -67,14 +74,21 @@ class Shell:
             elif cmd == "exit":
                 print("Closing Program :(")
                 Connection.close()
-                exit()
+                os._exit(0)
             elif cmd == "clear":
                 Shell.clear()
         else:
-            print("INVALID Command -_-")
+            print("INVALID COMMAND -_-")
+
 
     @staticmethod
-    def print_menu(additional_options=[]):
+    def print_menu(additional_options: [str] = []) -> None:
+        """Prints the help menu of all the currently-available keywords
+
+        Args:
+            additional_options (list[str], optional): Additional context-dependent
+                keywords to print in help text. Defaults to [].
+        """
         options = Shell.get_main_options()
         options = options[:-3] + additional_options + options[-3:]
 
@@ -84,4 +98,3 @@ class Shell:
             print(f"- {option.capitalize()}")
         print()
         print("="*80)
-        return options

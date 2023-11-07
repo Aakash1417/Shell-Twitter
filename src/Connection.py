@@ -14,6 +14,7 @@ class Connection:
         """
         return Connection.connection is not None and Connection.cursor is not None
 
+
     @staticmethod
     def connect(path: str) -> None:
         """Initializes the db connection
@@ -26,9 +27,31 @@ class Connection:
         Connection.cursor.executescript(' PRAGMA foreign_keys=ON; ')
         Connection.connection.commit()
 
+
+    @staticmethod
+    def contains(query: str, values: tuple) -> bool:
+        """Finds if a given query returns any results
+
+        Args:
+            query (str): given query
+            values (tuple): values to substitute in query
+
+        Returns:
+            bool: True if the query returns any results
+        """
+        assert Connection.is_connected()
+        Connection.cursor.execute(query, values)
+        result = Connection.cursor.fetchone()
+
+        if result == None:
+            return False
+        else:
+            return True
+
+
     @staticmethod
     def close() -> None:
-        """
-            Closes the connection to the database
-        """
+        """Closes the connection to the database"""
         Connection.connection.close()
+        Connection.connection = None
+        Connection.cursor = None

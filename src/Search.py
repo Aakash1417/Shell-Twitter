@@ -8,8 +8,8 @@ from Follow import Follow
 class Search:
     @staticmethod
     def search_for_tweets() -> None:
-        """This function prompts the user for keywords to search for and displays the results.
-            It also provides various options for interacting with the results.
+        """Prompts for keywords to search tweets by (text+mentions) and displays the results.
+            Provides various options for interacting with the results (ie. a tweets activity)
         """
         while True:
             keywords = input(
@@ -36,7 +36,7 @@ class Search:
         where_clause = " OR ".join(conditions)
 
         query = f"""
-            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, NULL as retweeter
+            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, t.replyto, NULL as retweeter
             FROM {table_clause}
             WHERE ({where_clause})
             AND u.usr = t.writer
@@ -51,15 +51,16 @@ class Search:
         Search.parse_results(results, column_names, 5, [
             "scrollup", "scrolldown", "viewinfo", "reply", "retweet"], 'tweet')
 
+
     @staticmethod
-    def search_for_user_tweets(usr:int) -> None:
-        """will search the tweets of the selected user
+    def search_for_user_tweets(usr: int) -> None:
+        """Searches for the tweets of a given user and presents a tweets activity.
         
         Args:
             usr (int): the user id of the selected user
         """
         query = f"""
-            SELECT u.name, t.tid, t.writer, t.tdate, t.text, NULL as retweeter
+            SELECT DISTINCT u.name, t.tid, t.writer, t.tdate, t.text, t.replyto, NULL as retweeter
             FROM users u, tweets t
             WHERE u.usr = t.writer
             AND t.writer = ?
@@ -72,21 +73,22 @@ class Search:
                         for description in Connection.cursor.description]
         Search.parse_results(results, column_names, 3, [
             "scrollup", "scrolldown", "viewinfo", "reply", "retweet"], 'tweet')   
+
     
     @staticmethod
     def search_for_users() -> None:
-        """Searches for users whose name or city match a keyword
+        """Prompts for keywords to search users by (name+city) and displays the results.
+            Provides various options for interacting with the results (ie. a users activity)
         """
         assert Connection.is_connected()
         keyword = []
         while True:
             # ensure that only one keyword is entered
-            keyword =  input("Enter a keyword to search users for:").strip().split()
+            keyword =  input("Enter a keyword to search users for: ").strip().split()
             if len(keyword) != 1:
                 print("Please enter only one (1) keyword")
             else:
                 break
-            
 
         # users whose name match are shown in ascending order of name length first
         # then, remaining users by ascending order of city length
@@ -113,9 +115,11 @@ class Search:
         Search.parse_results(results, column_names, 5,
                             ["scrollup", "scrolldown", "select", "follow"], 'user')
 
+
     @staticmethod
     def search_for_followers() -> None:
-        """Searches for all followers of current user
+        """Searches for all followers of currently logged in user,
+            displaying results in a users activity.
         """
         assert Connection.is_connected()
         # users whose follow the logged in user in ordered in descending date followed
@@ -129,15 +133,18 @@ class Search:
         Search.parse_results(results, column_names, len(results), [
                              "scrollup", "scrolldown", "select", "follow"], 'user')
 
+
     @staticmethod
     def parse_results(query_results: [tuple], column_names: [str], num_display: int, additional_options: [str], item_type: str) -> None:
-        """parses results of query to be passed in interact 
+        """Parses query results (a list of tuples ie. rows),
+            converting to a list of dictionaries (keys are column names)
+            and passes it to interact()
 
         Args:
-            query_result (list(tuple)): the query results
-            column_names (list(str)): the names of the columns returned for query results
+            query_result (list[tuple]): the query results
+            column_names (list[str]): the names of the columns returned for query results
             num_display (int): number of tweets/user to display at once
-            additional_options (list(str)): the additional commands after searching tweets/users
+            additional_options (list[str]): the additional commands after searching tweets/users
             item_type (str): the type of items being displayed (user/tweet)
         """
         result_list = []
@@ -147,14 +154,15 @@ class Search:
         Search.interact(result_list, num_display,
                         additional_options, item_type)
 
+
     @staticmethod
     def interact(lst: [dict], num_display: int, additional_options: [str], item_type: str) -> None:
-        """This function provides various options for interacting with the results of a search
+        """Provides options for interacting with the results of a search via a phony shell
 
-        Parameters:
-            lst (list of dictionaries): A list of tweet/user objects
+        Args:
+            lst (list[dict]): A list of tweet/user objects
             num_display (int): The number of tweets/users to display per page
-            additional_options (list of strings): A list of additional commands that can be run at shell
+            additional_options (list[str]): A list of additional commands that can be run by the phony shell
             item_type (string): The type of item being displayed (tweet or user)
         """
         offset = 0
@@ -167,7 +175,7 @@ class Search:
 
             cmd = input(">>> ").strip().lower().split()
             if len(cmd) < 1:
-                print("INVALID Command -_-")
+                print("INVALID COMMAND -_-")
                 continue
             print_options = True
 
@@ -192,52 +200,54 @@ class Search:
                     index = int(cmd[1])
                     # select user by the position of where they appear in a list
                     if index > len(lst)+1 or index < 1:
-                        print("INVALID ID")
+                        print("INVALID INDEX")
                         continue
                     usr = lst[index-1]['usr']
                     Follow.follow(usr)
                     print_options = False
                 except:
-                    print("INVALID ID")
+                    print("INVALID INDEX")
                     continue
-            # select a user to display their information
+            # select a user to display their information (launching a tweets activity)
             elif cmd[0] == 'select' and item_type == 'user':
                 print_options = False
                 try:
                     index = int(cmd[1])
                     # select user by the position of where they appear in a list
                     if index > len(lst)+1 or index < 1:
-                        print("INVALID ID")
+                        print("INVALID INDEX")
                         continue
                     usr = lst[index-1]['usr']
                     Search.get_user_info(usr, lst[index-1]['name']) # displays user info
                     Search.search_for_user_tweets(usr) # displays tweets of users
                     return
                 except:
-                    print("INVALID ID")
+                    print("INVALID INDEX")
                     continue
+            # reply to the numbered tweet
             elif cmd[0] == 'reply' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if tid is None:
-                    print("INVALID ID")
+                    print("INVALID INDEX")
                     continue
                 from ComposeTweet import ComposeTweet
                 ComposeTweet.createTweet(tid)
+            # retweet the numbered tweet
             elif cmd[0] == 'retweet' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if tid is None:
-                    print("INVALID ID")
+                    print("INVALID INDEX")
                     continue
                 from ComposeTweet import ComposeTweet
                 ComposeTweet.createRetweet(tid)
-                # view info of a tweet
+            # view info of a tweet
             elif cmd[0] == 'viewinfo' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if tid is None:
-                    print("INVALID ID")
+                    print("INVALID INDEX")
                     continue
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
@@ -249,12 +259,12 @@ class Search:
                 print(
                     f"Tweet [{cmd[1]}] has {retweets_count} retweets and {replies_count} replies")
             else:
-                print("INVALID Command -_-")
+                print("INVALID COMMAND -_-")
                 continue
 
     @staticmethod    
-    def get_user_info(usr: int, name:str) -> None:
-        """gets the number of tweets, the number of users being followed, and the number of followers
+    def get_user_info(usr: int, name: str) -> None:
+        """Shows the # of tweets, the # of followers, and # of following of a given user
 
         Args:
             usr (int): the user id of selected user
@@ -268,15 +278,16 @@ class Search:
         print(f"\nYou are looking at {name}'s profile.")
         print(f"Tweet Count: {tweets}\t Followers: {followers} \t Following: {followees}")
 
+
     @staticmethod
-    def get_number_of_tweets(usr:int) -> int:
-        """gets the number of tweets that selected followers has posted/retweeted
+    def get_number_of_tweets(usr: int) -> int:
+        """Gets the # of tweets that a given user has posted
 
         Args:
-            usr (int): the username of the selected follower
+            usr (int): user id of the chosen user
 
         Returns:
-            int: number of tweets and retweets
+            int: # of tweets
         """
         assert Connection.is_connected()
         # number of tweets
@@ -288,15 +299,16 @@ class Search:
             tweetResult[0] = 0
         return tweetResult[0]
 
+
     @staticmethod
-    def get_number_of_followers(usr:int) -> int:
-        """returns the number of followers of the selected follower
+    def get_number_of_followers(usr: int) -> int:
+        """Gets the # of users following a given user
 
         Args:
-            usr (int): the selected follower
+            usr (int): user id of the chosen user
 
         Returns:
-            int: number of followers
+            int: # of followers following
         """
         assert Connection.is_connected()
         query = "SELECT COUNT(*) FROM follows WHERE flwee = ?"
@@ -309,15 +321,14 @@ class Search:
 
 
     @staticmethod
-    def get_number_of_following(usr:int) -> int:
-        
-        """returns the number of user following selected follower
+    def get_number_of_following(usr: int) -> int:
+        """Gets the # of users a given user is following
 
         Args:
-            usr (int): the username of the selected follower
+            usr (int): user id of the chosen user
 
         Returns:
-            int: number of users following
+            int: # of users being followed
         """
         assert Connection.is_connected()
         query = "SELECT COUNT(*) FROM follows WHERE flwer = ?"
@@ -328,8 +339,18 @@ class Search:
         else:
             return result[0]
 
+
     @staticmethod
-    def listnum_to_tid(lst, option_id) -> int:
+    def listnum_to_tid(lst: [dict], option_id: str) -> int:
+        """Converts an index in a list of tweets to the tid of the selected tweet
+
+        Args:
+            lst (list[dict]): list of tweet objects
+            option_id (str): index in the list, as a string
+
+        Returns:
+            int: tid of the tweet at index option_id, or None if invalid index
+        """
         try:
             index = int(option_id)
             if index > len(lst)+1 or index < 1:
@@ -338,16 +359,18 @@ class Search:
         except:
             return None
 
+
     @staticmethod
     def print_items(lst: [dict], num_display: int, offset: int, item_type: str) -> None:
-        """This function prints a list of tweets or users
+        """Prints a list of tweets or users
 
-        Parameters:
-            lst (list of dictionaries): A list of tweet objects
-            num_display (int): The number of tweets to display per page
-            offset (int): The number of tweets to skip
-            item_type (string): The type of item being displayed (tweet or user)
+        Args:
+            lst (list[dict]): the list of tweet/user objects
+            num_display (int): # of tweets to display per page
+            offset (int): # of tweets to skip
+            item_type (str): the type of item being displayed (tweet or user)
         """
+        assert Connection.is_connected()
         if len(lst) == 0:
             print("No results found!")
             print()
@@ -356,25 +379,55 @@ class Search:
         print("="*80)
         if item_type == 'tweet':
             for idx, item in enumerate(lst[offset:offset + num_display]):
+                # list index
                 print(f"{idx+offset+1}]")
+
+                if item['replyto'] is not None:
+                    # need to get the usr who wrote the parent
+                    parentQuery = """
+                            SELECT name, writer, text
+                            FROM users u, tweets t
+                            WHERE u.usr = t.writer
+                                AND t.tid = ?"""
+                    Connection.cursor.execute(parentQuery, (item['replyto'],))
+                    parentResult = Connection.cursor.fetchone()
+                    if parentResult[0] is not None:
+                        print(f"\t[Replying to {parentResult[0]} (+{parentResult[1]})]")
+                        print(f"\t >> {parentResult[2]}")
+                        print()
+
+                # tweet body
                 print(f"\t{item['name']} (+{item['writer']})")
                 print(f"\t{item['text']}")
                 print()
+
                 if item['retweeter'] is not None:
-                    print(f"\tRetweeted by {item['retweeter']} on", end=" ")
+                    # need to get the name of the retweeter
+                    rtQuery = """
+                            SELECT name, usr
+                            FROM users
+                            WHERE usr = ?"""
+                    Connection.cursor.execute(rtQuery, (item['retweeter'],))
+                    rtResult = Connection.cursor.fetchone()
+                    if rtResult[0] is not None:
+                        print(f"\tRetweeted by {rtResult[0]} (+{rtResult[1]}) on", end=" ")
                 else:
                     print("", end="\t")
                 print(f"{item['tdate']}")
                 print()
                 print("="*80)
+
         elif item_type == 'user':
             for idx, item in enumerate(lst[offset:offset + num_display]):
+                # list index
                 print(f"{idx+offset+1}]")
-                print(f"\t+{item['usr']}")
-                print(f"\t{item['name']}")
+
+                # user info
+                print(f"\t{item['name']} (+{item['usr']})")
                 print(f"\t{item['city']}")
                 print()
                 print("="*80)
+
         print(
             f"Showing page {math.ceil(offset / num_display) + 1} of {max(math.ceil(len(lst)/num_display),1)}")
         print()
