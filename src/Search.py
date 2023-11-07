@@ -209,20 +209,20 @@ class Search:
                     index = int(cmd[1])
                     # select user by the position of where they appear in a list
                     if index > len(lst)+1 or index < 1:
-                        print("if - INVALID ID")
+                        print("INVALID ID")
                         continue
                     usr = lst[index-1]['usr']
                     Search.get_user_info(usr, lst[index-1]['name']) # displays user info
                     Search.search_for_user_tweets(usr) # displays tweets of users
                     return
                 except:
-                    print("except - INVALID id")
+                    print("INVALID ID")
                     continue
             elif cmd[0] == 'reply' and item_type == 'tweet' and len(cmd) == 2:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if not tid:
-                    print("INVALID id")
+                    print("INVALID ID")
                     continue
                 from ComposeTweet import ComposeTweet
                 ComposeTweet.createTweet(tid)
@@ -230,7 +230,7 @@ class Search:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if not tid:
-                    print("INVALID id")
+                    print("INVALID ID")
                     continue
                 from ComposeTweet import ComposeTweet
                 ComposeTweet.createRetweet(tid)
@@ -239,7 +239,7 @@ class Search:
                 print_options = False
                 tid = Search.listnum_to_tid(lst, cmd[1])
                 if not tid:
-                    print("INVALID id")
+                    print("INVALID ID")
                     continue
                 Connection.cursor.execute(
                     "SELECT COUNT(*) FROM retweets WHERE tid = ?", (tid,))
@@ -335,10 +335,10 @@ class Search:
         try:
             index = int(option_id)
             if index > len(lst)+1 or index < 1:
-                return 0
+                return None
             return int(lst[index-1]['tid'])
         except:
-            return 0
+            return None
 
     @staticmethod
     def print_items(lst: [dict], num_display: int, offset: int, item_type: str) -> None:
