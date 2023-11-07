@@ -67,7 +67,9 @@ class Shell:
             elif cmd == "exit":
                 print("Closing Program :(")
                 Connection.close()
-                exit()
+                Connection.connection = None
+                Connection.cursor = None
+                os._exit(0)
             elif cmd == "clear":
                 Shell.clear()
         else:

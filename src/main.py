@@ -16,7 +16,7 @@ def main():
     if "--db-path" in sys.argv:
         if sys.argv.index("--db-path") == argc-1:
             print("Invalid command-line arguments!")
-            exit(1)
+            os._exit(1)
         dbPath = sys.argv[sys.argv.index("--db-path") + 1]
     else:
         dbPath = os.path.dirname(os.path.realpath(__file__)) + "/data.db"
