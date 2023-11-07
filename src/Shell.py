@@ -59,7 +59,7 @@ class Shell:
             elif cmd == "searchusers":
                 Search.search_for_users()
             elif cmd == "followers":
-                pass
+                Search.search_for_followers()
             elif cmd == "logout":
                 Login.logout()
             elif cmd == "help":
@@ -78,10 +78,10 @@ class Shell:
         options = Shell.get_main_options()
         options = options[:-3] + additional_options + options[-3:]
 
-        print("="*32)
+        print("="*80)
         print()
         for option in options:
             print(f"- {option.capitalize()}")
         print()
-        print("="*32)
+        print("="*80)
         return options
