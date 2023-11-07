@@ -29,7 +29,7 @@ class Search:
                 conditions.append("(LOWER(m.term) = ? AND m.tid = t.tid)")
                 params.append(term)
             else:
-                conditions.append("LOWER(t.text) LIKE ?")
+                conditions.append("(LOWER(t.text) LIKE ?)")
                 params.append('%' + keyword + '%')
 
         table_clause = ", ".join(tables)
